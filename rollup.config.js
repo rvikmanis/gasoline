@@ -1,55 +1,44 @@
-import babel from 'rollup-plugin-babel';
-import babelrc from 'babelrc-rollup';
+import babel from 'rollup-plugin-babel'
+import babelrc from 'babelrc-rollup'
 import nodeResolve from 'rollup-plugin-node-resolve'
 import commonJs from 'rollup-plugin-commonjs'
+import builtins from 'rollup-plugin-node-builtins'
 
-let pkg = require('./package.json');
-let external = [
-  'react', 'lodash',
-  'recompose', 'react-redux',
-  'redux', 'reselect'
-];
+const dependencies = require('./package.json').dependencies
 
-let plugins = [
+const plugins = [
+  builtins(),
   nodeResolve({
     module: true,
     jsnext: true,
-    main: true
+    main: true,
   }),
-  commonJs({
-    namedExports: {
-      'node_modules/lodash/fp.js': [
-        'mapValues', 'get', 'omit', 'keys', 'sortBy', 'map',
-        'compose', 'set', 'isEqual', 'reduce', 'some', 'identity',
-        'memoize', 'findLast'
-      ],
-      'node_modules/react/react.js': [
-        'Children', 'Component', 'PropTypes',
-        'createElement'
-      ]
-    },
-    include: 'node_modules/**'
-  }),
-  babel(babelrc({ addModuleOptions: false }))
+  commonJs(),
+  babel(Object.assign(
+    {},
+    babelrc({ addModuleOptions: false }),
+    { include: 'build/step-1/**' }
+  )),
 ]
 
-let configuration = {
-  entry: 'src/index.js',
-  plugins: plugins,
-  external: external,
-  targets: [
+const configuration = {
+  input: 'build/step-1/index.js',
+  plugins,
+  external: Object.keys(dependencies),
+  globals: { rxjs: 'Rx', react: "React" },
+  output: [
     {
-      dest: pkg['main'],
-      format: 'cjs',
-      // moduleName: 'Gasoline',
-      sourceMap: true
+      file: 'build/step-2/gasoline.js',
+      format: 'umd',
+      name: 'gasoline',
+      sourcemap: true,
     },
     {
-      dest: pkg['jsnext:main'],
+      file: 'build/step-2/gasoline.mjs',
       format: 'es',
-      sourceMap: true
-    }
-  ]
-};
+      sourcemap: true,
+    },
+  ],
+}
 
 export default configuration

@@ -4,16 +4,27 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "test": "jest",
-    "build": "rollup -c && babili --source-maps=true -o dist/gasoline.min.js dist/gasoline.js"
+    "test": "jest --verbose",
+    "b:_clean": "rm -rf ./build ./dist",
+    "b:_build": "tsc && cp -R ./src/vendor ./build/step-1 && rollup -c",
+    "b:_minify": "babili --source-maps=true -o build/step-2/gasoline.min.js build/step-2/gasoline.js",
+    "b:_dist": "cp -R ./build/step-2 ./dist && cp -R ./build/typings ./dist/typings",
+    "build": "yarn b:_clean && yarn b:_build && yarn b:_minify && yarn b:_dist"
   },
   "main": "dist/gasoline.js",
+  "types": "dist/typings/index.d.ts",
   "jsnext:main": "dist/gasoline.mjs",
+  "module": "dist/gasoline.mjs",
   "author": "Rudolfs Vikmanis <rudolfs.vikmanis@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^19.2.3",
+    "@types/node": "^7.0.18",
+    "@types/prop-types": "^15.5.1",
+    "@types/react": "^15.0.25",
     "babel-cli": "^6.24.0",
     "babel-core": "^6.24.0",
+    "babel-eslint": "6",
     "babel-jest": "^19.0.0",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-plugin-transform-flow-strip-types": "^6.22.0",
@@ -22,27 +33,45 @@
     "babel-preset-stage-0": "^6.22.0",
     "babelrc-rollup": "^3.0.0",
     "babili": "^0.0.12",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.1.3",
+    "eslint-plugin-import": "^2.2.0",
     "flow-bin": "0.43",
-    "jest": "^19.0.2",
-    "rollup": "^0.41.6",
-    "rollup-plugin-babel": "^2.7.1",
-    "rollup-plugin-commonjs": "^8.0.2",
-    "rollup-plugin-node-resolve": "^3.0.0"
+    "jest": "^20.0.4",
+    "rollup": "^0.49.2",
+    "rollup-plugin-babel": "^3.0.2",
+    "rollup-plugin-commonjs": "^8.2.0",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "shallow-equals": "^1.0.0",
+    "toposort-class": "^1.0.1",
+    "ts-jest": "^20.0.4",
+    "tslint": "^5.4.2",
+    "typescript": "2.4",
+    "ws": "2.3.1"
   },
   "dependencies": {
-    "lodash": "^4.17.4",
-    "prop-types": "^15.5.4",
-    "react": "^15.5.3",
-    "react-redux": "^5.0.3",
-    "recompose": "^0.23.0",
-    "redux": "^3.6.0",
-    "reselect": "^3.0.0",
-    "shallow-equals": "^1.0.0",
-    "toposort-class": "^1.0.1"
+    "prop-types": "^15.5.10",
+    "react": "^15.5.4",
+    "rxjs": "^5.4.0"
   },
   "jest": {
+    "testEnvironment": "jest-environment-jsdom",
+    "globals": {},
     "testPathIgnorePatterns": [
       "<rootDir>/examples/"
-    ]
+    ],
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "testMatch": [
+      "<rootDir>/test/**/*\\.test\\.(ts|tsx)",
+      "<rootDir>/src/**/*\\.spec\\.(ts|tsx)"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    }
   }
 }
