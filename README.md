@@ -4,7 +4,7 @@ Gasoline is a reactive state graph for rich user interfaces. It lets you create 
 
 Inspired by [Redux](redux) and [Elm](elm), Gasoline has a similar architecture, with one-way data-flow, immutable state and a deterministic model for updates in the form of reducers, but includes significant improvements:
 
-* A declarative API with support for synchronous dependencies between models - a novel solution to an old problem, and the *raison d'être* for Gasoline.
+* A declarative API with support for dependencies between models - the primary motivation for this project.
 
 * Asynchronous action streams - a way to abstract time-variant sequences, remote resource access and other side effects, heavily inspired by [redux-observable](redux-observable).
 
@@ -189,7 +189,7 @@ new Store<S>(model: Model<S>)
 
 ###### Description
 
-Dispatches `gasoline.Store.START` lifecycle action to all models. Subscribes to side effects. Invokes current *ready* callbacks.
+Dispatches the `gasoline.Store.START` lifecycle action. Subscribes to side effects. Invokes current *ready* callbacks.
 
 -----
 
@@ -202,7 +202,7 @@ Dispatches `gasoline.Store.START` lifecycle action to all models. Subscribes to 
 ```
 
 ###### Description
-Dispatches `gasoline.Store.STOP` lifecycle action to all models. Unsubscribes from side effects.
+Dispatches the `gasoline.Store.STOP` lifecycle action. Unsubscribes from side effects.
 
 -----
 
