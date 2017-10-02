@@ -1,8 +1,8 @@
 {
   "name": "gasoline",
   "private": true,
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "Reactive state graph for rich user interfaces",
   "scripts": {
     "test": "jest --verbose",
     "b:_clean": "rm -rf ./build ./dist",
@@ -16,6 +16,10 @@
   "jsnext:main": "dist/gasoline.mjs",
   "module": "dist/gasoline.mjs",
   "author": "Rudolfs Vikmanis <rudolfs.vikmanis@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rvikmanis/gasoline.git"
+  },
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^19.2.3",
