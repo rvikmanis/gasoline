@@ -216,3 +216,15 @@ Dispatches `gasoline.Store.STOP` lifecycle action to all models. Unsubscribes fr
 ###### Description
 If store is started, invokes `callback` on next tick.  
 If store is not started, schedules `callback` to be invoked once when the store starts next time.
+
+-----
+
+##### `dispatch(action)`
+###### Signature
+
+```ts
+(action: ActionLike) => void
+```
+
+###### Description
+Invokes model's update cycle, then emits the action on the async action stream.
