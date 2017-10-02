@@ -10,7 +10,7 @@ Inspired by [Redux](redux) and [Elm](elm), Gasoline has a similar architecture, 
 
 If you're building web apps with complex UIs, give it a try! Gasoline's high-level API and the ability to define dependencies on state objects helps avoid duplicated code and convoluted control structures. It can even make the implementation read like a straight-forward definition of your application's business rules. 
 
------
+#### Table of contents
 
 1. [Overview](#overview)
     1. [Models](#models)
@@ -19,7 +19,6 @@ If you're building web apps with complex UIs, give it a try! Gasoline's high-lev
 1. [Reference](#reference)
     1. [Model API](#model-api)
     1. [Store API](#store-api)
------
 
 ## Overview
 
