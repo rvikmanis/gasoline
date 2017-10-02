@@ -1,24 +1,17 @@
 import { Dict } from "../interfaces";
 
-const cache: Dict<Dict<boolean>> = {}
-
 function testActionType(rule: string, actionType: string) {
-  const rc = cache[rule] = cache[rule] || {}
-  if (actionType in rc) {
-    return rc[actionType]
-  }
-
   let str: string = rule
   let splitRule = rule.split('*')
 
   if (splitRule.length === 1) {
-    return rc[actionType] = actionType === rule
+    return actionType === rule
   } else if (splitRule.length === 2) {
     const [h, t] = splitRule
     if (h === '' && t !== '') {
-      return rc[actionType] = actionType.endsWith(t) && t.length < actionType.length
+      return actionType.endsWith(t) && t.length < actionType.length
     } else if (h !== '' && t === '') {
-      return rc[actionType] = actionType.startsWith(h) && h.length < actionType.length
+      return actionType.startsWith(h) && h.length < actionType.length
     }
   }
 
