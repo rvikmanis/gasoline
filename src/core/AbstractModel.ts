@@ -59,6 +59,7 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
     private _actionTypeMatchCache: Dict<boolean> = {}
 
     matchActionType(actionType: string) {
+        // Match all actions unless accepted action types are initialized
         if (!this.accept) {
             return true
         }
@@ -72,7 +73,7 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
         }
 
         if (this.isLinked) {
-            throw new Error('Model is already linked')
+            throw new Error(`Model '${this.keyPath}' is already linked`)
         }
 
         this.keyPath = keyPath

@@ -32,7 +32,7 @@ describe('#link(keyPath, store)', () => {
 
   test('throws error if called more than once', () => {
     expect(linking).not.toThrow()
-    expect(linking).toThrow('Model is already linked')
+    expect(linking).toThrow(`Model '${model.keyPath}' is already linked`)
   })
 
   test('changes #keyPath, #store and #isLinked', () => {
