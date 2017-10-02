@@ -38,7 +38,6 @@ export default class CombinedModel<Schema extends SchemaLike> extends AbstractMo
       return child
     }
     throw new Error(`Cannot find child at: ${key}`)
-
   }
 
   dump<R>(state: this['state']) {

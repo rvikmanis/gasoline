@@ -14,9 +14,14 @@ export class Model<S = void, AC extends ActionCreators = {}, D extends SchemaLik
         accept?: string[],
         dump?: (state: S | void) => any,
         load?: (dump: any, updateContext: UpdateContext<SchemaLike>) => S | void,
-        actionCreators?: AC
+        actionCreators?: AC,
+        persistent?: boolean
     }) {
         super()
+
+        const persistent = options.persistent === undefined
+            ? true
+            : options.persistent
 
         if (options.dependencies) {
             this.dependencies = options.dependencies
@@ -30,13 +35,11 @@ export class Model<S = void, AC extends ActionCreators = {}, D extends SchemaLik
             stateLess = true
         }
 
-        if (options.process) {
-            this.process = options.process
-        } else {
-            this.process = () => ActionsObservable.empty()
-        }
+        this.process = typeof options.process === 'function'
+            ? options.process
+            : () => ActionsObservable.empty()
 
-        if (stateLess) {
+        if (stateLess || !persistent) {
             this.dump = () => undefined
             this.load = () => undefined
         } else {
