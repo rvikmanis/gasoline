@@ -13,6 +13,8 @@ export default class CombinedModel<Schema extends SchemaLike> extends AbstractMo
   constructor(schema: Schema) {
     super()
     this.children = schema
+    this.accept = this._combineActionTypeMatchLists(schema)
+    this.hasChildren = true
   }
 
   link(keyPath: string, store: Store<any>) {
@@ -22,8 +24,6 @@ export default class CombinedModel<Schema extends SchemaLike> extends AbstractMo
     const sortedChildren = this._getSortedChildren(this.children)
     this.dependencies = this._createExternalDependencies(sortedChildren)
     this.children = sortedChildren
-
-    this.accept = this._combineActionTypeMatchLists(sortedChildren)
 
     return () => {
       childrenOnLink.forEach(cb => cb())
@@ -78,7 +78,7 @@ export default class CombinedModel<Schema extends SchemaLike> extends AbstractMo
   process = (action$: ActionsObservable) => {
     const mapper = (key: keyof Schema) => {
       const model = this.children[key]
-      let a$ = action$
+      let a$ = action$.withModel(model)
 
       if (model.accept) {
         a$ = action$.ofType(Store.START, Store.STOP, ...model.accept)

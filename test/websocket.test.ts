@@ -49,7 +49,7 @@ test('Scenario: connection refused ', () => {
     .toPromise()
 
   store.start()
-  store.dispatch(sm.actionCreators.open())
+  sm.actions.open()
 
   return promise
 })
@@ -88,7 +88,7 @@ test('Scenario: connection established', () => {
     .toPromise()
 
   store.start()
-  store.dispatch(sm.actionCreators.open())
+  sm.actions.open()
 
   return promise
 })

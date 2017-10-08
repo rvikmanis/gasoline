@@ -54,7 +54,7 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
         }
         this.isStarted = true
 
-        let action$ = ActionsObservable.from(this._input$, Scheduler.async)
+        let action$ = ActionsObservable.from(this._input$, Scheduler.async).withModel(this.model)
 
         if (this.model.accept) {
             action$ = action$.ofType(Store.START, Store.STOP, ...this.model.accept)
@@ -135,7 +135,6 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
         }
 
         const action = { ...input, meta }
-
         const ctx = this._createUpdateContext(action)
         const state = this.model.update(this.model.state, ctx)
         this._flush(state, ctx)

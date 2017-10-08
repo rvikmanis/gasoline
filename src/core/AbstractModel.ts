@@ -4,21 +4,26 @@ import matchActionType from '../helpers/matchActionType'
 import Store from "./Store";
 import { Observable, Subscription, Observer } from "rxjs";
 import mapValues from "../helpers/mapValues";
+import clone from "../helpers/clone";
+import ActionType from "../helpers/ActionType";
 
-export type ActionCreators = { [key: string]: Function }
+export type ActionCreators = { [key: string]: (...args: any[]) => ActionLike }
 
 export abstract class AbstractModel<State, AC extends ActionCreators = {}, Dependencies extends SchemaLike = {}> implements NodeLike {
     public dependencies = {} as Dependencies;
     public abstract update: UpdateHandler<State, Dependencies>;
     public abstract process: ProcessHandler<this>;
     public accept?: string[]
-    public actionCreators = {} as AC
+    protected _actionCreators: AC = {} as AC;
+    private _linkedActionCreators: AC;
     private _actions: {[K in keyof this["actionCreators"]]: (...args: any[]) => void };
 
     public keyPath: string
     public store: Store
     public isLinked = false
     public isDisposed = false
+
+    public hasChildren: boolean = false;
 
     private _allSubscriptions = new Subscription;
 
@@ -66,13 +71,33 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
         })
     }
 
+    public get actionCreators() {
+        if (!this._linkedActionCreators) {
+            this._linkedActionCreators = mapValues(this._actionCreators || {}, (actionCreator, k) => {
+                return (...args: any[]) => {
+                    const action = clone(actionCreator(...args))
+                    const descriptor = ActionType.parse(action.type)
+
+                    if (descriptor.isBasic) {
+                        return action
+                    }
+
+                    if (descriptor.isBound) {
+                        throw new Error(`Invalid action creator '${k}': must not return bound generic action type '${descriptor.actionType}'`);
+                    }
+                    action.type = descriptor.getBound(this.keyPath).actionType
+                    return action
+                }
+            })
+        }
+        return this._linkedActionCreators
+    }
+
     public get actions() {
         if (!this._actions) {
             this._actions = mapValues(this.actionCreators, actionCreator => {
                 return (...args: any[]) => {
-                    this.whenLinked(() => {
-                        this.store.dispatch(actionCreator(...args))
-                    })
+                    this.store.dispatch(actionCreator(...args))
                 }
             })
         }

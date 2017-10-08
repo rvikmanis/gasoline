@@ -50,6 +50,7 @@ export interface NodeLike {
   store: Store<any>;
   isLinked: boolean;
   isDisposed: boolean;
+  hasChildren: boolean;
 
   getStateFromDigest(digest: Dict<any>): any;
   matchActionType(actionType: string): boolean;

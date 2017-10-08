@@ -56,13 +56,13 @@ export class Model<S = void, AC extends ActionCreators = {}, D extends SchemaLik
         }
 
         if (actionCreators) {
-            this.actionCreators = actionCreators
+            this._actionCreators = actionCreators
         }
 
         this.update = (state: S = initialState as S, updateContext) => {
-            const { action: { type: actionType } } = updateContext
-            if (actionType in actionHandlers) {
-                state = actionHandlers[actionType](state, updateContext)
+            const { genericActionType } = updateContext
+            if (genericActionType in actionHandlers) {
+                state = actionHandlers[genericActionType](state, updateContext)
             }
             return update(state, updateContext)
         }

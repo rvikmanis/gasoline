@@ -51,21 +51,28 @@ describe('#link(keyPath, store)', () => {
     expect(a.store).toBe(c.store)
     expect(b.store).toBe(c.store)
   })
+})
+
+describe('#constructor(children: object)', () => {
+  let a: NodeLike
+  let b: NodeLike
+  let c: CombinedModel<any>
+
+  beforeEach(() => {
+    a = new FakeModel()
+    b = new FakeModel()
+  })
 
   test('sets #accept to combined match-list from all children', () => {
     a.accept = ['A']
     b.accept = ['B']
-    expect(c.accept).toBe(undefined)
-
-    c.link('/', Object.create(null))
+    c = new CombinedModel({ a, b })
     expect(c.accept).toEqual(['B', 'A'])
   })
 
   test('sets #accept to undefined if at least one child has undefined match-list', () => {
     a.accept = ['A']
-    expect(c.accept).toBe(undefined)
-
-    c.link('/', Object.create(null))
+    c = new CombinedModel({ a, b })
     expect(c.accept).toBe(undefined)
   })
 })

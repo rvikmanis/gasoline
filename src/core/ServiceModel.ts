@@ -9,7 +9,12 @@ import Store from "./Store";
 import { ServiceModelState, ServiceControlMessage, ServiceReadyState } from "../interfaces"
 import { ReplaySubject, Observer } from "rxjs";
 
-export class ServiceModel extends AbstractModel<ServiceModelState> {
+export type ServiceActionCreators = {
+    open: (...args: any[]) => ActionLike;
+    close: (...args: any[]) => ActionLike;
+}
+
+export class ServiceModel extends AbstractModel<ServiceModelState, ServiceActionCreators> {
     static OPEN = 'gasoline.ServiceModel.OPEN:*'
     static CLOSE = 'gasoline.ServiceModel.CLOSE:*'
     static READY_STATE_CHANGE = 'gasoline.ServiceModel.READY_STATE_CHANGE:*'
@@ -27,6 +32,15 @@ export class ServiceModel extends AbstractModel<ServiceModelState> {
         error: string
     }
 
+    protected _actionCreators = {
+        open() {
+            return { type: ServiceModel.OPEN }
+        },
+        close() {
+            return { type: ServiceModel.CLOSE }
+        }
+    }
+
     link(keyPath: string, store: Store<any>) {
         const onLink = super.link(keyPath, store)
 
@@ -37,27 +51,7 @@ export class ServiceModel extends AbstractModel<ServiceModelState> {
             error: ServiceModel.ERROR.replace('*', this.keyPath),
         }
 
-        const { open, close, readyStateChange, error } = this._actionTypes
-
-        let accept: undefined | string[] = []
-        if (!this.acceptIncoming || !this.acceptOutgoing) {
-            accept = undefined
-        } else {
-            accept = [open, close, readyStateChange, error].concat(this.acceptIncoming, this.acceptOutgoing)
-        }
-
-        this.accept = accept
-
         return onLink
-    }
-
-    actionCreators = {
-        open: () => {
-            return { type: this._actionTypes.open }
-        },
-        close: () => {
-            return { type: this._actionTypes.close }
-        }
     }
 
     private _readyStateChange(status: ServiceReadyState) {
@@ -68,7 +62,7 @@ export class ServiceModel extends AbstractModel<ServiceModelState> {
         return { type: this._actionTypes.error, payload: event }
     }
 
-    process = (action$: ActionsObservable) => {
+    process = (action$: ActionsObservable, model: this) => {
         const dispatch$ = new ReplaySubject<Subscribable<ActionLike>>()
 
         const { OPEN, CLOSE, READY_STATE_CHANGE, ERROR } = ServiceModel
@@ -87,7 +81,7 @@ export class ServiceModel extends AbstractModel<ServiceModelState> {
             return Object.assign({}, action, {
                 meta: Object.assign({}, action.meta, { origin })
             })
-        })).notOfType(...localActionTypes)
+        })).withModel(model).notOfType(...localActionTypes)
 
         if (this.acceptIncoming) {
             filteredIncoming$ = filteredIncoming$.ofType(...this.acceptIncoming)
@@ -112,12 +106,12 @@ export class ServiceModel extends AbstractModel<ServiceModelState> {
         }
 
         const controlMessage$ = action$
-            .ofType(this._actionTypes.close, this._actionTypes.open)
+            .ofType(ServiceModel.CLOSE, ServiceModel.OPEN)
             // Skip `meta.replyTo` by accessing the normal observable for mapping
             .observable.map(action => actionTypeControlMessageMap[action.type] as ServiceControlMessage)
 
         const readyStateChange$ = action$
-            .ofType(this._actionTypes.readyStateChange)
+            .ofType(ServiceModel.READY_STATE_CHANGE)
             // Skip `meta.replyTo` by accessing the normal observable for mapping
             .observable.map(action => action.payload)
 
@@ -185,8 +179,8 @@ export class ServiceModel extends AbstractModel<ServiceModelState> {
             state = { status: "initial" }
         }
 
-        switch (updateContext.action.type) {
-            case this._actionTypes.readyStateChange:
+        switch (updateContext.genericActionType) {
+            case ServiceModel.READY_STATE_CHANGE:
                 return { status: updateContext.action.payload }
             default:
                 return state
@@ -211,6 +205,17 @@ export class ServiceModel extends AbstractModel<ServiceModelState> {
 
         this.acceptIncoming = options.acceptIncoming
         this.acceptOutgoing = options.acceptOutgoing
+
+        const { OPEN, CLOSE, READY_STATE_CHANGE, ERROR } = ServiceModel
+
+        let accept: undefined | string[] = []
+        if (!this.acceptIncoming || !this.acceptOutgoing) {
+            accept = undefined
+        } else {
+            accept = [OPEN, CLOSE, READY_STATE_CHANGE, ERROR].concat(this.acceptIncoming, this.acceptOutgoing)
+        }
+
+        this.accept = accept
     }
 }
 

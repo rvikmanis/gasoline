@@ -5,6 +5,7 @@ import { observable as Symbol_observable } from 'rxjs/symbol/observable'
 import { TeardownLogic, Subscription } from "rxjs/Subscription";
 import { Subscriber } from "rxjs/Subscriber";
 import { Observable } from 'rxjs'
+import ActionType from "../helpers/ActionType"
 
 const {
   of,
@@ -20,7 +21,7 @@ const {
   mergeMap
 } = Observable.prototype
 
-import { ActionLike, DispatchedActionLike } from "../interfaces";
+import { ActionLike, DispatchedActionLike, NodeLike } from "../interfaces";
 import matchActionType from "../helpers/matchActionType";
 import { IScheduler } from "rxjs/Scheduler";
 
@@ -29,6 +30,7 @@ export type Source<T> = ActionsObservable<T> | Observable<T>
 export class ActionsObservable<T = ActionLike> implements Subscribable<T> {
   protected source: Source<any>
   protected operator: Operator<any, T>
+  protected model: NodeLike
   protected _observable: Observable<T>
 
   static of<T = ActionLike>(...actions: T[]) {
@@ -47,9 +49,13 @@ export class ActionsObservable<T = ActionLike> implements Subscribable<T> {
     return new this<T>(empty())
   }
 
-  constructor(source?: Source<T>) {
+  constructor(source?: Source<T>, model?: NodeLike) {
     if (source) {
       this.source = source
+    }
+
+    if (model) {
+      this.model = model
     }
   }
 
@@ -83,16 +89,26 @@ export class ActionsObservable<T = ActionLike> implements Subscribable<T> {
   lift<R>(operator: Operator<T, R>): ActionsObservable<R> {
     const obs = new ActionsObservable<R>()
     obs.source = this as any
+    obs.model = this.model
     obs.operator = operator
     return obs
   }
 
-  private _matchType(actionTypes: string[], matchValue: boolean) {
-    const cache = {}
+  withModel(model: NodeLike): ActionsObservable<T> {
+    return new ActionsObservable(this, model)
+  }
 
-    return this.filter((action: T & DispatchedActionLike) =>
-      matchValue === matchActionType(actionTypes, action.type, cache)
-    )
+  private _matchType(actionTypes: string[], matchValue: boolean) {
+    const cache = {};
+
+    if (!this.model) {
+      throw new Error(`action$.model is undefined`);
+    }
+
+    return this.filter((action: T & DispatchedActionLike) => {
+      const genericActionType = ActionType.getGenericForModel(action.type, this.model)
+      return matchValue === matchActionType(actionTypes, genericActionType, cache)
+    })
   }
 
   ofType(...actionTypes: string[]) {

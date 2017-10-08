@@ -68,30 +68,15 @@ describe('#matchActionType(actionType: string)', () => {
   test('returns true if #accept contains exact match', () => {
     expect(call({ accept: ['ANYTHING'] }, 'ANYTHING')).toBe(true)
     expect(call({ accept: ['SOMETHING', 'ANYTHING', 'b*'] }, 'ANYTHING')).toBe(true)
-  })
-
-  test('returns true if #accept contains valid rules (*a, b*) and a partial match', () => {
-    expect(call({ accept: ['ANY*'] }, 'ANYTHING')).toBe(true)
-    expect(call({ accept: ['*THING'] }, 'ANYTHING')).toBe(true)
+    expect(call({ accept: ['ANY:*'] }, 'ANY:*')).toBe(true)
     expect(call({ accept: ['*THING', 'A'] }, 'A')).toBe(true)
+    expect(call({ accept: ['*THING', 'A'] }, '*THING')).toBe(true)
   })
 
-  test('returns false if #accept contains valid rules (*a, b*) but not a partial match', () => {
-    expect(call({ accept: ['*THING'] }, 'THING')).toBe(false)
-    expect(call({ accept: ['ANY*'] }, 'ANY')).toBe(false)
-    expect(call({ accept: ['ANY*'] }, 'B')).toBe(false)
+  test('returns false if #accept doesn\'t contain exact match', () => {
+    expect(call({ accept: ['ANY*'] }, 'ANYTHING')).toBe(false)
+    expect(call({ accept: ['*THING'] }, 'ANYTHING')).toBe(false)
+    expect(call({ accept: ['*THING', '*A*'] }, 'BAZ')).toBe(false)
+    expect(call({ accept: ['*THING', 'A'] }, 'SOMETHING')).toBe(false)
   })
-
-  test('throws error, if #accept contains invalid rules (*, *foo*, foo*bar, foo** etc.)', () => {
-    expect(() => call({ accept: ['*'] }, 'ANYTHING')).toThrow('Invalid rule: *')
-    expect(() => call({ accept: ['*a*'] }, 'ANYTHING')).toThrow('Invalid rule: *a*')
-    expect(() => call({ accept: ['a*b'] }, 'ANYTHING')).toThrow('Invalid rule: a*b')
-    expect(() => call({ accept: ['**a'] }, 'ANYTHING')).toThrow('Invalid rule: **a')
-    expect(() => call({ accept: ['b**'] }, 'ANYTHING')).toThrow('Invalid rule: b**')
-    expect(() => call({ accept: ['a*b*'] }, 'ANYTHING')).toThrow('Invalid rule: a*b*')
-    expect(() => call({ accept: ['*a*b'] }, 'ANYTHING')).toThrow('Invalid rule: *a*b')
-    expect(() => call({ accept: ['*a*b*'] }, 'ANYTHING')).toThrow('Invalid rule: *a*b*')
-  })
-
-
 })
