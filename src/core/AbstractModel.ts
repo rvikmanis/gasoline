@@ -60,6 +60,7 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
     public whenLinked(callback: () => void) {
         if (this.isLinked) {
             callback();
+            return
         }
 
         this._whenLinked.promise.then(() => {
