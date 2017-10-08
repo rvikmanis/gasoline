@@ -24,11 +24,11 @@ let store
 
 function setup() {
   const txt = new Model({
-    update(state: string = 'Foo+', { action }) {
-      if (action.type === SET_TEXT) {
-        state = action.payload
+    initialState: 'Foo+',
+    actionHandlers: {
+      [SET_TEXT](_, { action: { payload } }) {
+        return payload
       }
-      return state
     }
   })
 
@@ -233,7 +233,7 @@ test('Dispatching', () => {
       manyDeps: '4, FOO+'
     }
   })
-  expect(store.lastUpdateContext.workingState.updated).toEqual({
+  expect(store._lastUpdateContext.workingState.updated).toEqual({
     '/': true,
     '/counter': true,
     '/aggregate': true,
@@ -252,7 +252,7 @@ test('Dispatching', () => {
       manyDeps: '3, BAR'
     }
   })
-  expect(store.lastUpdateContext.workingState.updated).toEqual({
+  expect(store._lastUpdateContext.workingState.updated).toEqual({
     '/': true,
     '/text': true,
     '/text/text': true,
@@ -274,7 +274,7 @@ test('Dispatching', () => {
       manyDeps: '6, BAR'
     }
   })
-  expect(store.lastUpdateContext.workingState.updated).toEqual({
+  expect(store._lastUpdateContext.workingState.updated).toEqual({
     '/': true,
     '/counter': true,
     '/aggregate': true,

@@ -11,7 +11,10 @@ export class Model<S = void, AC extends ActionCreators = {}, D extends SchemaLik
         dependencies?: D,
         update?: UpdateHandler<S, D>,
         process?: ProcessHandler<Model<S, AC, D>>,
+        initialState?: S,
+        actionHandlers?: { [key: string]: UpdateHandler<S, D> },
         accept?: string[],
+        acceptExtra?: string[],
         dump?: (state: S | void) => any,
         load?: (dump: any, updateContext: UpdateContext<SchemaLike>) => S | void,
         actionCreators?: AC,
@@ -19,44 +22,64 @@ export class Model<S = void, AC extends ActionCreators = {}, D extends SchemaLik
     }) {
         super()
 
-        const persistent = options.persistent === undefined
-            ? true
-            : options.persistent
+        const {
+            dependencies,
+            accept,
+            acceptExtra,
+            actionCreators,
+            initialState,
+            update = ((s: S) => s),
+            process = (() => ActionsObservable.empty()),
+            actionHandlers = {},
+            dump,
+            load,
+            persistent = true
+        } = options
 
-        if (options.dependencies) {
-            this.dependencies = options.dependencies
+        const stateLess = !options.update && !options.actionHandlers
+
+        if (dependencies) {
+            this.dependencies = dependencies
         }
 
-        let stateLess = false
-        if (typeof options.update === 'function') {
-            this.update = options.update
+        if (accept) {
+            this.accept = accept
         } else {
-            this.update = <any>(() => undefined)
-            stateLess = true
+            if (options.actionHandlers) {
+                const acceptHandlers = Object.keys(actionHandlers)
+                if (!options.process && !options.update) {
+                    this.accept = acceptHandlers
+                } else if (acceptExtra) {
+                    this.accept = acceptHandlers.concat(acceptExtra)
+                }
+            }
         }
 
-        this.process = typeof options.process === 'function'
-            ? options.process
-            : () => ActionsObservable.empty()
+        if (actionCreators) {
+            this.actionCreators = actionCreators
+        }
+
+        this.update = (state: S = initialState as S, updateContext) => {
+            const { action: { type: actionType } } = updateContext
+            if (actionType in actionHandlers) {
+                state = actionHandlers[actionType](state, updateContext)
+            }
+            return update(state, updateContext)
+        }
+
+        this.process = process
+
+        if (dump) {
+            this.dump = dump
+        }
+
+        if (load) {
+            this.load = load
+        }
 
         if (stateLess || !persistent) {
             this.dump = () => undefined
             this.load = () => undefined
-        } else {
-            if (options.dump) {
-                this.dump = options.dump
-            }
-            if (options.load) {
-                this.load = options.load
-            }
-        }
-
-        if (options.accept) {
-            this.accept = options.accept
-        }
-
-        if (options.actionCreators) {
-            this.actionCreators = options.actionCreators
         }
     }
 }

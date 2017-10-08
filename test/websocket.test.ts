@@ -72,13 +72,13 @@ test('Scenario: connection established', () => {
     const actionTypes = data.map(action => [action.type, action.payload])
     expect(actionTypes).toEqual([
       [Store.START, undefined],
-      [sm._actionTypes.open, undefined],
-      [sm._actionTypes.readyStateChange, 'connecting'],
-      [sm._actionTypes.readyStateChange, 'open'],
+      [(<any>sm)._actionTypes.open, undefined],
+      [(<any>sm)._actionTypes.readyStateChange, 'connecting'],
+      [(<any>sm)._actionTypes.readyStateChange, 'open'],
       ['TEST', undefined],
       ['TEST_RESPONSE', undefined],
       ['TEST_RESPONSE_RECEIVED', undefined],
-      [sm._actionTypes.readyStateChange, 'closed']
+      [(<any>sm)._actionTypes.readyStateChange, 'closed']
     ])
   }
 
