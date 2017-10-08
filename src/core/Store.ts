@@ -15,37 +15,28 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
     static LOAD = 'gasoline.Store.LOAD'
 
     private _lastUpdateContext?: UpdateContext<any>;
-    private _listeners: Dict<Listener[]> = {};
-    private _input$ = new Subject<ActionLike>();
-    private _subscription: ISubscription
-    private _actionStream$ = new Subject<Observable<ActionLike>>();
-    public isStarted: boolean = false
-    public digest: Dict<any> = {};
+    private _subscription?: ISubscription;
+    private _listeners: Dict<Listener[]>;
+    private _input$: Subject<ActionLike>;
+    private _actionStream$: Subject<Observable<ActionLike>>;
 
+    public isStarted: boolean;
+    public digest: Dict<any>;
     public action$: Observable<ActionLike>;
     public model: AbstractModel<State>;
 
     constructor(model: AbstractModel<State>) {
-        this.model = model
-        const onLinked = this.model.link('/', this)
-        onLinked()
+        this._listeners = {}
+        this._input$ = new Subject<ActionLike>()
+        this._actionStream$ = new Subject<Observable<ActionLike>>()
+
+        this.isStarted = false
+        this.digest = {}
         this.action$ = this._actionStream$.switch()
-    }
-
-    replaceModel(model: AbstractModel<State>) {
-        if (this.isStarted) {
-            throw new Error(`Cannot replace model on a running store. Call store.stop() before calling store.replaceModel(newModel)`);
-        }
-
-        const dump = this.dump()
-        const oldModel = this.model
         this.model = model
 
-        oldModel.unlink()
-        const onLinked = this.model.link('/', this)
-
-        this.load(dump)
-        onLinked();
+        const onLinked = model.link('/', this)
+        onLinked()
     }
 
     start() {
@@ -55,19 +46,15 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
         this.isStarted = true
 
         let action$ = ActionsObservable.from(this._input$, Scheduler.async).withModel(this.model)
-
         if (this.model.accept) {
             action$ = action$.ofType(Store.START, Store.STOP, ...this.model.accept)
         }
 
         this._actionStream$.next(action$.observable)
-
         this._subscription = Observable
             .from(this.model.process(action$, this.model))
-            .subscribe(action => { this._dispatch(action) })
-
+            .subscribe(action => { this.dispatch(action) })
         this._dispatch({ type: Store.START })
-
         this._invokeListeners("started")
     }
 
@@ -77,8 +64,10 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
         }
 
         this._dispatch({ type: Store.STOP })
+        if (this._subscription) {
+            this._subscription.unsubscribe()
+        }
 
-        this._subscription.unsubscribe()
         this.isStarted = false
     }
 
@@ -95,6 +84,14 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
         }, 0)
     }
 
+    dispatch = (input: ActionLike) => {
+        if ([Store.START, Store.STOP, Store.LOAD].indexOf(input.type) > -1) {
+            throw new Error(`Cannot dispatch lifecycle action '${input.type}'`);
+        }
+
+        return this._dispatch(input)
+    }
+
     load(dump?: any) {
         if (this.isStarted) {
             throw new Error('Cannot load after store is started.')
@@ -108,12 +105,30 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
         return this.model.dump(this.model.state)
     }
 
-    dispatch = (input: ActionLike) => {
-        if ([Store.START, Store.STOP, Store.LOAD].indexOf(input.type) > -1) {
-            throw new Error(`Cannot dispatch lifecycle action '${input.type}'`);
+    listen(eventName: string, listener: Listener) {
+        const wrapper = () => { listener() }
+        this._listeners[eventName] = (this._listeners[eventName] || []).concat(wrapper)
+        return () => {
+            if (this._listeners[eventName].indexOf(wrapper) > -1) {
+                this._listeners[eventName] = this._listeners[eventName].filter(l => l !== wrapper)
+            }
+        }
+    }
+
+    replaceModel(model: AbstractModel<State>) {
+        if (this.isStarted) {
+            throw new Error(`Cannot replace model on a running store. Call store.stop() before calling store.replaceModel(newModel)`);
         }
 
-        return this._dispatch(input)
+        const dump = this.dump()
+        const oldModel = this.model
+        this.model = model
+
+        oldModel.unlink()
+        const onLinked = this.model.link('/', this)
+
+        this.load(dump)
+        onLinked();
     }
 
     private _dispatch(input: ActionLike) {
@@ -139,16 +154,6 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
         const state = this.model.update(this.model.state, ctx)
         this._flush(state, ctx)
         this._input$.next(ctx.action)
-    }
-
-    listen(eventName: string, listener: Listener) {
-        const wrapper = () => { listener() }
-        this._listeners[eventName] = (this._listeners[eventName] || []).concat(wrapper)
-        return () => {
-            if (this._listeners[eventName].indexOf(wrapper) > -1) {
-                this._listeners[eventName] = this._listeners[eventName].filter(l => l !== wrapper)
-            }
-        }
     }
 
     private _invokeListeners(eventName: string) {

@@ -1,6 +1,5 @@
 import { Dict } from "../interfaces";
 
-
 export default function matchActionType(
   actionTypeList: string[],
   actionType: string,
