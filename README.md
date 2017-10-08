@@ -8,7 +8,7 @@ Inspired by [Redux](redux) and [Elm](elm), Gasoline has a similar architecture, 
 
 * Asynchronous action streams - a way to abstract time-variant sequences, remote resource access and other side effects, heavily inspired by [redux-observable](redux-observable).
 
-If you're building web apps with complex UIs, give it a try! Gasoline's high-level API and the ability to define dependencies on state objects helps avoid duplicated code and convoluted control structures. It can even make the implementation read like a straight-forward definition of your application's business rules. 
+If you're building web apps with complex UIs, give it a try! Gasoline's high-level API and the ability to define dependencies on state objects helps avoid duplicated code and convoluted control structures. It can even make the implementation read like a straight-forward definition of your application's business rules.
 
 #### Table of contents
 
@@ -28,13 +28,74 @@ A model represents some part of the application's state along with actions and s
 
 >Note that models don't really hold state, instead each model keeps a reference to its state from the store.
 
-Models are created by instantiating the `Model` class.
+Models are created by instantiating the `Model` class:
+
+```ts
+const counter = new gasoline.Model({
+
+    initialState: 0,
+
+    actionHandlers: {
+        "INCREMENT": state => ++state
+    },
+
+    actionCreators: {
+        increment() {
+            return { type: "INCREMENT" }
+        }
+    }
+
+});
+
+const autoIncrement = new gasoline.Model({
+
+    initialState: false,
+
+    actionHandlers: {
+        "TOGGLE_AUTO_INCREMENT": state => !state
+    },
+
+    actionCreators: {
+        toggle() {
+            return { type: "TOGGLE_AUTO_INCREMENT" }
+        }
+    },
+
+    process(action$, model) {
+        return action$
+            .ofType("TOGGLE_AUTO_INCREMENT", Store.START)
+            .switchMap(() => {
+                if (model.state) {
+                    const action = counter.actionCreators.increment()
+                    return Observable.timer(1000).mapTo(action)
+                }
+
+                return Observable.empty()
+            })
+    },
+
+    acceptExtra: []
+
+});
+```
 
 ### Store and actions
 
-Since models don't hold state on their own, a store is required to actually do anything. There should be only one store per application and it can be created by instantiating the `Store` class.
+Since models don't hold state on their own, a store is required to actually do anything. There should be only one store per application and it can be created by instantiating the `Store` class:
 
-Actions are dispatched on the store.
+```ts
+const rootModel = gasoline.combineModels({
+    counter,
+    autoIncrement
+})
+const store = new gasoline.Store(rootModel)
+```
+
+Actions are dispatched on the store. But before we can do that, the store needs to be started:
+
+```ts
+store.start()
+```
 
 ## Installation
 
@@ -77,13 +138,13 @@ new Model<S, C, D>(options: {
 
 ```ts
 (state: S, context: UpdateContext) => S
-``` 
+```
 
 ###### Parameters
 
 1. `state` - the current state.
 1. `context` - an object containing information about the current update cycle.
-    
+
     Has the following props:
     * `action` - the dispatched action.
     * `dependencies` - combined state of the model's dependencies, or an empty object.
@@ -99,7 +160,7 @@ Invoked when the model receives an action.
 
 A special lifecycle action is dispatched at the beginning to every model; In this case `update` is called with undefined state, and its return value becomes the initial state.
 
->Note that you must not mutate the state. Always return a new instance if the state should change. 
+>Note that you must not mutate the state. Always return a new instance if the state should change.
 
 -----
 
@@ -109,7 +170,7 @@ A special lifecycle action is dispatched at the beginning to every model; In thi
 
 ```ts
 <I, O>(
-    action$: Rx.Observable<ActionLike & I>, 
+    action$: Rx.Observable<ActionLike & I>,
     model: Model<S, C, D>
 ) => Rx.Observable<ActionLike & O>
 ```
@@ -125,7 +186,7 @@ An output stream of actions to be dispatched in response.
 
 ###### Description
 
-Invoked when the store is started. Handles side effects and asynchronous behaviors for the model. 
+Invoked when the store is started. Handles side effects and asynchronous behaviors for the model.
 
 -----
 
@@ -214,7 +275,7 @@ Dispatches the `gasoline.Store.STOP` lifecycle action. Unsubscribes from side ef
 ```
 
 ###### Description
-If store is started, invokes `callback` on next tick.  
+If store is started, invokes `callback` on next tick.
 If store is not started, schedules `callback` to be invoked once when the store starts next time.
 
 -----
