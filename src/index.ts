@@ -5,6 +5,20 @@ import * as interfaces from './interfaces'
 export { interfaces }
 
 /**
+ * Helpers
+ */
+import ActionType from "./helpers/ActionType"
+import clone from "./helpers/clone"
+import mapValues from "./helpers/mapValues"
+import matchActionType from "./helpers/matchActionType"
+export const helpers = {
+    ActionType,
+    clone,
+    mapValues,
+    matchActionType
+}
+
+/**
  * Core
  */
 export { default as Store } from './core/Store'

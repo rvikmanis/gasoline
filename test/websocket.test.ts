@@ -2,8 +2,7 @@ import WebSocket from 'ws'
 const g = (global as any)
 g.WebSocket = WebSocket
 
-import { Store, ServiceModel, WebSocketServiceAdapter, interfaces, Model, combineModels } from '../src'
-import ActionType from '../src/helpers/ActionType'
+import { Store, ServiceModel, WebSocketServiceAdapter, interfaces, Model, combineModels, helpers } from '../src'
 import { Observable } from "rxjs";
 
 let sm: ServiceModel
@@ -28,9 +27,9 @@ beforeEach(() => {
 
   store = new Store(combineModels({ service: sm, responder: rs }))
   actionTypeMap = {
-    open: ActionType.bindGenericToModel(ServiceModel.OPEN, sm),
-    error: ActionType.bindGenericToModel(ServiceModel.ERROR, sm),
-    readyStateChange: ActionType.bindGenericToModel(ServiceModel.READY_STATE_CHANGE, sm)
+    open: helpers.ActionType.bindGenericToModel(ServiceModel.OPEN, sm),
+    error: helpers.ActionType.bindGenericToModel(ServiceModel.ERROR, sm),
+    readyStateChange: helpers.ActionType.bindGenericToModel(ServiceModel.READY_STATE_CHANGE, sm)
   }
 })
 
