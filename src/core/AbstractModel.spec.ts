@@ -1,5 +1,5 @@
 import AbstractModel from './AbstractModel'
-import { NodeLike } from "../interfaces";
+import { ModelInterface } from "../interfaces";
 
 class ConcreteModel extends AbstractModel<any> {
   update: any = () => undefined
@@ -57,7 +57,7 @@ describe('#link(keyPath, store)', () => {
 })
 
 describe('#matchActionType(actionType: string)', () => {
-  function call(thisContext: Partial<NodeLike>, actionType: string) {
+  function call(thisContext: Partial<ModelInterface>, actionType: string) {
     return AbstractModel.prototype.matchActionType.call(thisContext, actionType)
   }
 

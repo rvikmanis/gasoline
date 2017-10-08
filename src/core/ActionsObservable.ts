@@ -21,7 +21,7 @@ const {
   mergeMap
 } = Observable.prototype
 
-import { ActionLike, DispatchedActionLike, NodeLike } from "../interfaces";
+import { ActionLike, DispatchedActionLike, ModelInterface } from "../interfaces";
 import matchActionType from "../helpers/matchActionType";
 import { IScheduler } from "rxjs/Scheduler";
 
@@ -30,7 +30,7 @@ export type Source<T> = ActionsObservable<T> | Observable<T>
 export class ActionsObservable<T = ActionLike> implements Subscribable<T> {
   protected source: Source<any>
   protected operator: Operator<any, T>
-  protected model: NodeLike
+  protected model: ModelInterface
   protected _observable: Observable<T>
 
   static of<T = ActionLike>(...actions: T[]) {
@@ -49,7 +49,7 @@ export class ActionsObservable<T = ActionLike> implements Subscribable<T> {
     return new this<T>(empty())
   }
 
-  constructor(source?: Source<T>, model?: NodeLike) {
+  constructor(source?: Source<T>, model?: ModelInterface) {
     if (source) {
       this.source = source
     }
@@ -94,7 +94,7 @@ export class ActionsObservable<T = ActionLike> implements Subscribable<T> {
     return obs
   }
 
-  withModel(model: NodeLike): ActionsObservable<T> {
+  withModel(model: ModelInterface): ActionsObservable<T> {
     return new ActionsObservable(this, model)
   }
 

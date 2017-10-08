@@ -1,6 +1,6 @@
 import AbstractModel, { ActionCreators } from './AbstractModel'
 import UpdateContext from './UpdateContext'
-import { Dict, NodeLike, UpdateHandler, ProcessHandler, SchemaLike, ActionLike, DispatchedActionLike, ServiceAdapter, ServiceBridge } from "../interfaces";
+import { Dict, ModelInterface, UpdateHandler, ProcessHandler, SchemaLike, ActionLike, DispatchedActionLike, ServiceAdapter, ServiceBridge } from "../interfaces";
 import { Observable, Subscribable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { TeardownLogic, Subscription } from 'rxjs/Subscription';
@@ -65,7 +65,7 @@ export class ServiceModel extends AbstractModel<ServiceModelState, ServiceAction
         const status$ = new Subject<ActionLike>()
         const incoming$ = new Subject<ActionLike>()
 
-        const origin = `gasoline.ServiceModel:${this.keyPath}`
+        const origin = this.keyPath
 
         let filteredIncoming$ = ActionsObservable.from(incoming$.map(action => {
             // Mark action with `meta.origin` to prevent circular dispatch

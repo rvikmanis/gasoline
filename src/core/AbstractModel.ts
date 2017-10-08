@@ -1,4 +1,4 @@
-import { Dict, NodeLike, UpdateHandler, ProcessHandler, SchemaLike, ActionLike } from "../interfaces";
+import { Dict, ModelInterface, UpdateHandler, ProcessHandler, SchemaLike, ActionLike } from "../interfaces";
 import UpdateContext from "./UpdateContext";
 import matchActionType from '../helpers/matchActionType'
 import Store from "./Store";
@@ -8,73 +8,76 @@ import clone from "../helpers/clone";
 import ActionType from "../helpers/ActionType";
 
 export type ActionCreators = { [key: string]: (...args: any[]) => ActionLike }
+export type DispatcherBoundActionCreators<AC extends ActionCreators> = {[K in keyof AC]: (...args: any[]) => void }
 
-export abstract class AbstractModel<State, AC extends ActionCreators = {}, Dependencies extends SchemaLike = {}> implements NodeLike {
-    public dependencies = {} as Dependencies;
+type Deferred<T> = {
+    promise: Promise<T>,
+    resolve: (value?: T | PromiseLike<T>) => void
+}
+
+function createDeferred<T>() {
+    const deferred = {} as Deferred<T>
+    deferred.promise = new Promise<T>(resolve => {
+        deferred.resolve = resolve
+    })
+    return deferred
+}
+
+export abstract class AbstractModel<State, AC extends ActionCreators = {}, Dependencies extends SchemaLike = {}> implements ModelInterface {
+    protected _actionCreators: AC;
+    private _linkedActionCreators: AC;
+    private _actions: DispatcherBoundActionCreators<AC>;
+    private _allSubscriptions: Subscription;
+    private _whenLinked: Deferred<void>
+    private _actionTypeMatchCache: Dict<boolean>
+
     public abstract update: UpdateHandler<State, Dependencies>;
     public abstract process: ProcessHandler<this>;
+    public dependencies: Dependencies;
+    public isLinked: boolean
+    public isDisposed: boolean
+    public hasChildren: boolean
+    public state$: Observable<State>
     public accept?: string[]
-    protected _actionCreators: AC = {} as AC;
-    private _linkedActionCreators: AC;
-    private _actions: {[K in keyof this["actionCreators"]]: (...args: any[]) => void };
-
     public keyPath: string
     public store: Store
-    public isLinked = false
-    public isDisposed = false
 
-    public hasChildren: boolean = false;
-
-    private _allSubscriptions = new Subscription;
-
-    private _whenLinked: {
-        promise: Promise<void>,
-        resolve: () => void
-    }
-
-    public state$: Observable<State> = Observable.create((observer: Observer<State>) => {
-        const cancel = this._listenState(state => {
-            observer.next(state)
-        })
-
-        this._allSubscriptions.add(() => {
-            cancel();
-            observer.complete();
-        })
-
-        return cancel;
-    })
-
-    constructor() {
+    public constructor() {
         if (this.constructor === AbstractModel) {
             throw new TypeError('Cannot instantiate abstract class AbstractModel')
         }
 
-        const deferred = {} as any;
-        deferred.promise = new Promise(resolve => {
-            deferred.resolve = resolve
+        this._actionCreators = {} as AC
+        this._allSubscriptions = new Subscription
+        this._whenLinked = createDeferred()
+        this._actionTypeMatchCache = {}
+
+        this.dependencies = {} as Dependencies
+        this.isLinked = false
+        this.isDisposed = false
+        this.hasChildren = false
+
+        this.state$ = Observable.create((observer: Observer<State>) => {
+            const cancel = this._listenState(state => {
+                observer.next(state)
+            })
+
+            this._allSubscriptions.add(() => {
+                cancel();
+                observer.complete();
+            })
+
+            return cancel;
         })
-        this._whenLinked = deferred
     }
 
-    public whenLinked(callback: () => void) {
-        if (this.isLinked) {
-            callback();
-            return
-        }
-
-        this._whenLinked.promise.then(() => {
-            if (this.isDisposed) {
-                console.warn(`whenLinked callback failed to run: Model '${this.keyPath}' is disposed`)
-                return;
-            }
-            callback();
-        })
+    public get state(): State {
+        return this.getStateFromDigest(this.store.digest)
     }
 
     public get actionCreators() {
         if (!this._linkedActionCreators) {
-            this._linkedActionCreators = mapValues(this._actionCreators || {}, (actionCreator) => {
+            this._linkedActionCreators = mapValues(this._actionCreators, (actionCreator) => {
                 return ActionType.bindActionCreatorToModel(actionCreator, this)
             })
         }
@@ -90,17 +93,6 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
             })
         }
         return this._actions
-    }
-
-    private _actionTypeMatchCache: Dict<boolean> = {}
-
-    matchActionType(actionType: string) {
-        // Match all actions unless accepted action types are initialized
-        if (!this.accept) {
-            return true
-        }
-
-        return matchActionType(this.accept, actionType, this._actionTypeMatchCache)
     }
 
     link(keyPath: string, store: Store<any>): () => void {
@@ -129,6 +121,30 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
         this._allSubscriptions.unsubscribe();
     }
 
+    whenLinked(callback: () => void) {
+        if (this.isLinked) {
+            callback();
+            return
+        }
+
+        this._whenLinked.promise.then(() => {
+            if (this.isDisposed) {
+                console.warn(`whenLinked callback failed to run: Model '${this.keyPath}' is disposed`)
+                return;
+            }
+            callback();
+        })
+    }
+
+    matchActionType(actionType: string) {
+        // Match all actions unless accepted action types are initialized
+        if (!this.accept) {
+            return true
+        }
+
+        return matchActionType(this.accept, actionType, this._actionTypeMatchCache)
+    }
+
     dump(state: State | void): any {
         return state
     }
@@ -139,10 +155,6 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
 
     getStateFromDigest(digest: Dict<any>): State {
         return digest[this.keyPath]
-    }
-
-    get state(): State {
-        return this.getStateFromDigest(this.store.digest)
     }
 
     private _listenState(listener: (state: State) => void) {

@@ -1,4 +1,4 @@
-import { NodeLike, ActionLike, Dict, StateLike, SchemaLike } from "../interfaces";
+import { ModelInterface, ActionLike, Dict, StateLike, SchemaLike } from "../interfaces";
 import mapValues from "../helpers/mapValues";
 import ActionType from "../helpers/ActionType";
 import Store from "./Store";
@@ -14,7 +14,7 @@ const createEmptyWorkingState = () => (
 
 export default class UpdateContext<Dependencies extends SchemaLike, A extends ActionLike = ActionLike> {
   public readonly action: A;
-  public model: NodeLike;
+  public model: ModelInterface;
   public workingState: WorkingState;
 
   public shouldUpdate: boolean;
@@ -34,7 +34,7 @@ export default class UpdateContext<Dependencies extends SchemaLike, A extends Ac
     )
   }
 
-  constructor(action: A, initialModel: NodeLike, initialWorkingState?: WorkingState) {
+  constructor(action: A, initialModel: ModelInterface, initialWorkingState?: WorkingState) {
     this.action = action
     const descriptor = ActionType.parse(action.type)
     if (descriptor.isGeneric && !descriptor.isBound) {
@@ -71,7 +71,7 @@ export default class UpdateContext<Dependencies extends SchemaLike, A extends Ac
     this.dependenciesHaveChanged = dependenciesHaveChanged
   }
 
-  public setModel<Model extends NodeLike>(model: Model) {
+  public setModel<Model extends ModelInterface>(model: Model) {
     this.model = model
     this.compute()
     return this as UpdateContext<Model['dependencies']>

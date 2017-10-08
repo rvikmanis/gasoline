@@ -1,6 +1,6 @@
 import CombinedModel from './CombinedModel'
 import AbstractModel from './AbstractModel'
-import { NodeLike } from "../interfaces";
+import { ModelInterface } from "../interfaces";
 
 class FakeModel extends AbstractModel<any> {
   process: any
@@ -29,8 +29,8 @@ describe('#dump(state)', () => {
 })
 
 describe('#link(keyPath, store)', () => {
-  let a: NodeLike
-  let b: NodeLike
+  let a: ModelInterface
+  let b: ModelInterface
   let c: CombinedModel<any>
 
   beforeEach(() => {
@@ -54,8 +54,8 @@ describe('#link(keyPath, store)', () => {
 })
 
 describe('#constructor(children: object)', () => {
-  let a: NodeLike
-  let b: NodeLike
+  let a: ModelInterface
+  let b: ModelInterface
   let c: CombinedModel<any>
 
   beforeEach(() => {

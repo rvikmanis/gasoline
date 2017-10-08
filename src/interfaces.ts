@@ -4,6 +4,7 @@ import Store from "./core/Store";
 import ActionsObservable from "./core/ActionsObservable";
 import { Observable } from "rxjs/Observable";
 import { ISubscription, TeardownLogic } from "rxjs/Subscription";
+import { ActionCreators, DispatcherBoundActionCreators } from "./core/AbstractModel";
 
 export interface Dict<T> {
   [key: string]: T
@@ -39,10 +40,10 @@ export interface DispatchedActionLike extends ActionLike {
   meta: DispatchedActionMeta
 }
 
-export interface NodeLike {
+export interface ModelInterface {
   accept?: string[];
   update: UpdateHandler<any, SchemaLike>;
-  process: ProcessHandler<NodeLike>;
+  process: ProcessHandler<ModelInterface>;
   dependencies: SchemaLike;
   state: any;
 
@@ -51,6 +52,9 @@ export interface NodeLike {
   isLinked: boolean;
   isDisposed: boolean;
   hasChildren: boolean;
+
+  actionCreators: ActionCreators;
+  actions: DispatcherBoundActionCreators<any>;
 
   getStateFromDigest(digest: Dict<any>): any;
   matchActionType(actionType: string): boolean;
@@ -64,11 +68,11 @@ export type UpdateHandler<S, D extends SchemaLike> = (
   (state: S, context: UpdateContext<D>) => S
 )
 
-export type ProcessHandler<Model extends NodeLike> = (
+export type ProcessHandler<Model extends ModelInterface> = (
   (action$: ActionsObservable, model: Model) => Subscribable<ActionLike>
 )
 
-export type SchemaLike = Dict<NodeLike>
+export type SchemaLike = Dict<ModelInterface>
 export type StateLike<S extends SchemaLike> = {[K in keyof S]: S[K]['state']}
 
 export type ServiceReadyState = "connecting" | "open" | "closing" | "closed"

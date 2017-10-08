@@ -1,5 +1,5 @@
 import { relative } from 'path'
-import { NodeLike, ActionLike } from "../interfaces";
+import { ModelInterface, ActionLike } from "../interfaces";
 import clone from "./clone";
 
 namespace ActionType {
@@ -108,7 +108,7 @@ namespace ActionType {
         return _cache[actionType]
     }
 
-    export function getGenericOrLiteralForModel(concreteActionType: string, model: NodeLike) {
+    export function getGenericOrLiteralForModel(concreteActionType: string, model: ModelInterface) {
         const d = parse(concreteActionType)
         let genericActionType = d.actionType
 
@@ -125,7 +125,7 @@ namespace ActionType {
         return genericActionType
     }
 
-    export function bindGenericToModel(actionType: string, model: NodeLike) {
+    export function bindGenericToModel(actionType: string, model: ModelInterface) {
         const d = parse(actionType)
 
         if (!d.isGeneric) {
@@ -139,7 +139,7 @@ namespace ActionType {
         return d.getBound(model.keyPath).actionType
     }
 
-    export function bindActionCreatorToModel(actionCreator: (...args: any[]) => ActionLike, model: NodeLike) {
+    export function bindActionCreatorToModel(actionCreator: (...args: any[]) => ActionLike, model: ModelInterface) {
         return (...args: any[]) => {
             const action = clone(actionCreator(...args))
             const descriptor = parse(action.type)

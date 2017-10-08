@@ -1,5 +1,5 @@
 import AbstractModel from "./AbstractModel";
-import { ActionLike, Dict, NodeLike, SchemaLike, StateLike, ActionMeta, Listener, DispatchedActionMeta } from "../interfaces";
+import { ActionLike, Dict, ModelInterface, SchemaLike, StateLike, ActionMeta, Listener, DispatchedActionMeta } from "../interfaces";
 import UpdateContext from "./UpdateContext";
 import { Observable } from 'rxjs/Observable';
 import { ISubscription } from 'rxjs/Subscription';

@@ -1,4 +1,4 @@
-import { Dict, ActionLike, NodeLike, StateLike, SchemaLike } from "../interfaces";
+import { Dict, ActionLike, ModelInterface, StateLike, SchemaLike } from "../interfaces";
 import { relative } from 'path'
 import UpdateContext from "./UpdateContext";
 import Toposort from 'toposort-class'
@@ -158,7 +158,7 @@ export default class CombinedModel<Schema extends SchemaLike> extends AbstractMo
 
     Object
       .keys(children)
-      .map(key => [key, children[key]] as [keyof Schema, NodeLike])
+      .map(key => [key, children[key]] as [keyof Schema, ModelInterface])
       .forEach(([key, node]) => {
         const hasUnlinkedDependencies = Object.keys(node.dependencies)
           .filter(d => !node.dependencies[d].isLinked)
@@ -203,7 +203,7 @@ export default class CombinedModel<Schema extends SchemaLike> extends AbstractMo
   }
 
   private _createExternalDependencies(children: Schema) {
-    type Row = [keyof Schema, NodeLike]
+    type Row = [keyof Schema, ModelInterface]
 
     const dependencyReducer = (a: SchemaLike, [key, node]: Row) => {
       const ds = node.dependencies
