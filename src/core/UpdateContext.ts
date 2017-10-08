@@ -49,7 +49,7 @@ export default class UpdateContext<Dependencies extends SchemaLike, A extends Ac
 
   public compute() {
     this._dependencies = undefined
-    this.genericActionType = ActionType.getGenericForModel(this.action.type, this.model)
+    this.genericActionType = ActionType.getGenericOrLiteralForModel(this.action.type, this.model)
 
     // Match store lifecycle and model actions
     const actionDoesMatch: boolean = (

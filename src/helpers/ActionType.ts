@@ -1,5 +1,6 @@
 import { relative } from 'path'
-import { NodeLike } from "../interfaces";
+import { NodeLike, ActionLike } from "../interfaces";
+import clone from "./clone";
 
 namespace ActionType {
     const _cache: { [key: string]: Descriptor } = {};
@@ -107,7 +108,7 @@ namespace ActionType {
         return _cache[actionType]
     }
 
-    export function getGenericForModel(concreteActionType: string, model: NodeLike) {
+    export function getGenericOrLiteralForModel(concreteActionType: string, model: NodeLike) {
         const d = parse(concreteActionType)
         let genericActionType = d.actionType
 
@@ -122,6 +123,38 @@ namespace ActionType {
         }
 
         return genericActionType
+    }
+
+    export function bindGenericToModel(actionType: string, model: NodeLike) {
+        const d = parse(actionType)
+
+        if (!d.isGeneric) {
+            throw new Error(`Cannot bind non-generic action type '${d.actionType}' to model`)
+        }
+
+        if (d.isBound) {
+            throw new Error(`Cannot bind bound action type '${d.actionType}' to model`)
+        }
+
+        return d.getBound(model.keyPath).actionType
+    }
+
+    export function bindActionCreatorToModel(actionCreator: (...args: any[]) => ActionLike, model: NodeLike) {
+        return (...args: any[]) => {
+            const action = clone(actionCreator(...args))
+            const descriptor = parse(action.type)
+
+            if (descriptor.isBasic) {
+                return action
+            }
+
+            if (descriptor.isBound) {
+                throw new Error(`Unexpected bound generic action '${descriptor.actionType}'. Input action creator must return basic action or unbound generic action`);
+            }
+
+            action.type = descriptor.getBound(model.keyPath).actionType
+            return action
+        }
     }
 
     export type Descriptor = BasicDescriptor | GenericDescriptor | BoundGenericDescriptor;

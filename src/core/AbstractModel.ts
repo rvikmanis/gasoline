@@ -73,21 +73,8 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
 
     public get actionCreators() {
         if (!this._linkedActionCreators) {
-            this._linkedActionCreators = mapValues(this._actionCreators || {}, (actionCreator, k) => {
-                return (...args: any[]) => {
-                    const action = clone(actionCreator(...args))
-                    const descriptor = ActionType.parse(action.type)
-
-                    if (descriptor.isBasic) {
-                        return action
-                    }
-
-                    if (descriptor.isBound) {
-                        throw new Error(`Invalid action creator '${k}': must not return bound generic action type '${descriptor.actionType}'`);
-                    }
-                    action.type = descriptor.getBound(this.keyPath).actionType
-                    return action
-                }
+            this._linkedActionCreators = mapValues(this._actionCreators || {}, (actionCreator) => {
+                return ActionType.bindActionCreatorToModel(actionCreator, this)
             })
         }
         return this._linkedActionCreators

@@ -3,10 +3,12 @@ const g = (global as any)
 g.WebSocket = WebSocket
 
 import { Store, ServiceModel, WebSocketServiceAdapter, interfaces, Model, combineModels } from '../src'
+import ActionType from '../src/helpers/ActionType'
 import { Observable } from "rxjs";
 
 let sm: ServiceModel
 let store: Store
+let actionTypeMap: { [key: string]: string }
 
 beforeEach(() => {
   sm = new ServiceModel({
@@ -25,6 +27,11 @@ beforeEach(() => {
   })
 
   store = new Store(combineModels({ service: sm, responder: rs }))
+  actionTypeMap = {
+    open: ActionType.bindGenericToModel(ServiceModel.OPEN, sm),
+    error: ActionType.bindGenericToModel(ServiceModel.ERROR, sm),
+    readyStateChange: ActionType.bindGenericToModel(ServiceModel.READY_STATE_CHANGE, sm)
+  }
 })
 
 test('Scenario: connection refused ', () => {
@@ -32,10 +39,10 @@ test('Scenario: connection refused ', () => {
     const actionTypes = data.map(action => action.type)
     expect(actionTypes).toEqual([
       Store.START,
-      (<any>sm)._actionTypes.open,
-      (<any>sm)._actionTypes.readyStateChange,
-      (<any>sm)._actionTypes.error,
-      (<any>sm)._actionTypes.readyStateChange
+      actionTypeMap.open,
+      actionTypeMap.readyStateChange,
+      actionTypeMap.error,
+      actionTypeMap.readyStateChange
     ])
 
     const { code, address, port } = data[3].payload
@@ -72,13 +79,13 @@ test('Scenario: connection established', () => {
     const actionTypes = data.map(action => [action.type, action.payload])
     expect(actionTypes).toEqual([
       [Store.START, undefined],
-      [(<any>sm)._actionTypes.open, undefined],
-      [(<any>sm)._actionTypes.readyStateChange, 'connecting'],
-      [(<any>sm)._actionTypes.readyStateChange, 'open'],
+      [actionTypeMap.open, undefined],
+      [actionTypeMap.readyStateChange, 'connecting'],
+      [actionTypeMap.readyStateChange, 'open'],
       ['TEST', undefined],
       ['TEST_RESPONSE', undefined],
       ['TEST_RESPONSE_RECEIVED', undefined],
-      [(<any>sm)._actionTypes.readyStateChange, 'closed']
+      [actionTypeMap.readyStateChange, 'closed']
     ])
   }
 

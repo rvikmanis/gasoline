@@ -106,7 +106,7 @@ export class ActionsObservable<T = ActionLike> implements Subscribable<T> {
     }
 
     return this.filter((action: T & DispatchedActionLike) => {
-      const genericActionType = ActionType.getGenericForModel(action.type, this.model)
+      const genericActionType = ActionType.getGenericOrLiteralForModel(action.type, this.model)
       return matchValue === matchActionType(actionTypes, genericActionType, cache)
     })
   }

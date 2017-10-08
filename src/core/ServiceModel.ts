@@ -8,6 +8,8 @@ import ActionsObservable from "./ActionsObservable";
 import Store from "./Store";
 import { ServiceModelState, ServiceControlMessage, ServiceReadyState } from "../interfaces"
 import { ReplaySubject, Observer } from "rxjs";
+import ActionType from "../helpers/ActionType"
+import clone from "../helpers/clone";
 
 export type ServiceActionCreators = {
     open: (...args: any[]) => ActionLike;
@@ -25,13 +27,6 @@ export class ServiceModel extends AbstractModel<ServiceModelState, ServiceAction
     acceptIncoming?: string[];
     acceptOutgoing?: string[];
 
-    private _actionTypes: {
-        open: string,
-        close: string,
-        readyStateChange: string,
-        error: string
-    }
-
     protected _actionCreators = {
         open() {
             return { type: ServiceModel.OPEN }
@@ -44,22 +39,18 @@ export class ServiceModel extends AbstractModel<ServiceModelState, ServiceAction
     link(keyPath: string, store: Store<any>) {
         const onLink = super.link(keyPath, store)
 
-        this._actionTypes = {
-            open: ServiceModel.OPEN.replace('*', this.keyPath),
-            close: ServiceModel.CLOSE.replace('*', this.keyPath),
-            readyStateChange: ServiceModel.READY_STATE_CHANGE.replace('*', this.keyPath),
-            error: ServiceModel.ERROR.replace('*', this.keyPath),
-        }
+        this._readyStateChange = ActionType.bindActionCreatorToModel(this._readyStateChange, this) as any
+        this._error = ActionType.bindActionCreatorToModel(this._error, this) as any
 
         return onLink
     }
 
     private _readyStateChange(status: ServiceReadyState) {
-        return { type: this._actionTypes.readyStateChange, payload: status }
+        return { type: ServiceModel.READY_STATE_CHANGE, payload: status }
     }
 
     private _error(event: Error) {
-        return { type: this._actionTypes.error, payload: event }
+        return { type: ServiceModel.ERROR, payload: event }
     }
 
     process = (action$: ActionsObservable, model: this) => {
@@ -78,9 +69,10 @@ export class ServiceModel extends AbstractModel<ServiceModelState, ServiceAction
 
         let filteredIncoming$ = ActionsObservable.from(incoming$.map(action => {
             // Mark action with `meta.origin` to prevent circular dispatch
-            return Object.assign({}, action, {
-                meta: Object.assign({}, action.meta, { origin })
-            })
+            action = clone(action)
+            action.meta = clone(action.meta || {})
+            action.meta.origin = origin
+            return action
         })).withModel(model).notOfType(...localActionTypes)
 
         if (this.acceptIncoming) {
@@ -101,8 +93,8 @@ export class ServiceModel extends AbstractModel<ServiceModelState, ServiceAction
         }
 
         const actionTypeControlMessageMap = {
-            [this._actionTypes.close]: "close",
-            [this._actionTypes.open]: "open"
+            [ActionType.bindGenericToModel(ServiceModel.CLOSE, this)]: "close",
+            [ActionType.bindGenericToModel(ServiceModel.OPEN, this)]: "open"
         }
 
         const controlMessage$ = action$
