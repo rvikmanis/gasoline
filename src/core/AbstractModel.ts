@@ -2,7 +2,7 @@ import { Dict, NodeLike, UpdateHandler, ProcessHandler, SchemaLike, ActionLike }
 import UpdateContext from "./UpdateContext";
 import matchActionType from '../helpers/matchActionType'
 import Store from "./Store";
-import { Observable } from "rxjs";
+import { Observable, Subscription, Observer } from "rxjs";
 import mapValues from "../helpers/mapValues";
 
 export type ActionCreators = { [key: string]: Function }
@@ -20,15 +20,24 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
     public isLinked = false
     public isDisposed = false
 
+    private _allSubscriptions = new Subscription;
+
     private _whenLinked: {
         promise: Promise<void>,
         resolve: () => void
     }
 
-    public state$ = new Observable<State>(observer => {
-        return this._listenState(state => {
+    public state$: Observable<State> = Observable.create((observer: Observer<State>) => {
+        const cancel = this._listenState(state => {
             observer.next(state)
         })
+
+        this._allSubscriptions.add(() => {
+            cancel();
+            observer.complete();
+        })
+
+        return cancel;
     })
 
     constructor() {
@@ -43,11 +52,25 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
         this._whenLinked = deferred
     }
 
+    public whenLinked(callback: () => void) {
+        if (this.isLinked) {
+            callback();
+        }
+
+        this._whenLinked.promise.then(() => {
+            if (this.isDisposed) {
+                console.warn(`whenLinked callback failed to run: Model '${this.keyPath}' is disposed`)
+                return;
+            }
+            callback();
+        })
+    }
+
     public get actions() {
         if (!this._actions) {
             this._actions = mapValues(this.actionCreators, actionCreator => {
                 return (...args: any[]) => {
-                    this._whenLinked.promise.then(() => {
+                    this.whenLinked(() => {
                         this.store.dispatch(actionCreator(...args))
                     })
                 }
@@ -67,9 +90,9 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
         return matchActionType(this.accept, actionType, this._actionTypeMatchCache)
     }
 
-    link(keyPath: string, store: Store<any>) {
+    link(keyPath: string, store: Store<any>): () => void {
         if (this.isDisposed) {
-            throw new Error("Cannot link disposed model")
+            throw new Error(`Cannot link disposed model '${this.keyPath}'`)
         }
 
         if (this.isLinked) {
@@ -80,14 +103,17 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
         this.store = store
         this.isLinked = true
 
-        this._whenLinked.resolve()
+        return () => {
+            this._whenLinked.resolve()
+        }
     }
 
     unlink() {
         delete this.store
-        delete this.keyPath
         this.isLinked = false
         this.isDisposed = true
+
+        this._allSubscriptions.unsubscribe();
     }
 
     dump(state: State | void): any {
@@ -117,7 +143,7 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
         let cancel: () => void;
         let cancelled = false;
 
-        this._whenLinked.promise.then(() => {
+        this.whenLinked(() => {
             if (!cancelled) {
                 _listener()
                 cancel = this.store.listen(`update ${this.keyPath}`, _listener)

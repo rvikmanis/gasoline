@@ -28,7 +28,7 @@ export class ServiceModel extends AbstractModel<ServiceModelState> {
     }
 
     link(keyPath: string, store: Store<any>) {
-        super.link(keyPath, store)
+        const onLink = super.link(keyPath, store)
 
         this._actionTypes = {
             open: ServiceModel.OPEN.replace('*', this.keyPath),
@@ -47,6 +47,8 @@ export class ServiceModel extends AbstractModel<ServiceModelState> {
         }
 
         this.accept = accept
+
+        return onLink
     }
 
     actionCreators = {

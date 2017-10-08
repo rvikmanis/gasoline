@@ -7,29 +7,34 @@ import { Scheduler } from "rxjs"
 import { Subject } from 'rxjs/Subject'
 import ActionsObservable from "./ActionsObservable";
 import uuid from '../vendor/uuid'
+import clone from "../helpers/clone";
 
 export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLike<Schema> = StateLike<Schema>> {
     static START = 'gasoline.Store.START'
     static STOP = 'gasoline.Store.STOP'
     static LOAD = 'gasoline.Store.LOAD'
 
-    digest: Dict<any> = {};
-    lastUpdateContext?: UpdateContext<any>;
+    private _lastUpdateContext?: UpdateContext<any>;
     private _listeners: Dict<Listener[]> = {};
     private _input$ = new Subject<ActionLike>();
     private _subscription: ISubscription
     private _actionStream$ = new Subject<Observable<ActionLike>>();
-    public action$: Observable<ActionLike>
     public isStarted: boolean = false
+    public digest: Dict<any> = {};
 
-    constructor(public model: AbstractModel<State>) {
-        this.model.link('/', this)
+    public action$: Observable<ActionLike>;
+    public model: AbstractModel<State>;
+
+    constructor(model: AbstractModel<State>) {
+        this.model = model
+        const onLinked = this.model.link('/', this)
+        onLinked()
         this.action$ = this._actionStream$.switch()
     }
 
     replaceModel(model: AbstractModel<State>) {
         if (this.isStarted) {
-            this.stop()
+            throw new Error(`Cannot replace model on a running store. Call store.stop() before calling store.replaceModel(newModel)`);
         }
 
         const dump = this.dump()
@@ -37,10 +42,10 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
         this.model = model
 
         oldModel.unlink()
-        this.model.link('/', this)
+        const onLinked = this.model.link('/', this)
 
         this.load(dump)
-        this.start()
+        onLinked();
     }
 
     start() {
@@ -105,7 +110,7 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
 
     dispatch = (input: ActionLike) => {
         if ([Store.START, Store.STOP, Store.LOAD].indexOf(input.type) > -1) {
-            throw new Error("Cannot dispatch lifecycle action");
+            throw new Error(`Cannot dispatch lifecycle action '${input.type}'`);
         }
 
         return this._dispatch(input)
@@ -162,7 +167,7 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
             this.digest = ctx.workingState.digest
         }
 
-        this.lastUpdateContext = ctx
+        this._lastUpdateContext = ctx
 
         const updated = ctx.workingState.updated
         Object.keys(updated).forEach(keyPath => {
@@ -173,7 +178,7 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
     }
 
     private _createUpdateContext(action: ActionLike): UpdateContext<any> {
-        const workingState = { updated: {}, digest: Object.assign({}, this.digest) }
+        const workingState = { updated: {}, digest: clone(this.digest) }
         return new UpdateContext(action, this.model, workingState)
     }
 }

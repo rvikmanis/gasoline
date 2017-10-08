@@ -55,7 +55,7 @@ export interface NodeLike {
   matchActionType(actionType: string): boolean;
   dump(state: any): any;
   load(dump: any, updateContext: UpdateContext<SchemaLike>): any;
-  link(keyPath: string, store: any): void;
+  link(keyPath: string, store: any): () => void;
   unlink(): void;
 }
 
@@ -83,7 +83,7 @@ export interface ServiceBridge {
   throw(error: Error): void;
   dispatch(action: ActionLike): void;
   // discrepancy between ServiceReadyState and ServiceModelState["status"] exists because `initial`
-  // is a valid status to have, as it is the initial status of any service, but it is not a 
+  // is a valid status to have, as it is the initial status of any service, but it is not a
   // valid status to set at any later point in service lifecycle.
   getStatus(): ServiceModelState["status"]
 }

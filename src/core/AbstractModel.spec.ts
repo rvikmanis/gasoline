@@ -22,7 +22,7 @@ describe('#link(keyPath, store)', () => {
   let store: any
 
   function linking() {
-    model.link('/', store)
+    return model.link('/', store)
   }
 
   beforeEach(() => {
@@ -46,12 +46,12 @@ describe('#link(keyPath, store)', () => {
     expect(model.store).toBe(store)
   })
 
-  test('resolves #_whenLinked.promise', () => {
+  test('returns a function that resolves #_whenLinked.promise', () => {
     const promise = (model as any)._whenLinked.promise.then(() => {
       expect(model.isLinked).toBe(true)
     })
 
-    linking()
+    linking()()
     return promise
   })
 })

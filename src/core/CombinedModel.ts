@@ -16,15 +16,19 @@ export default class CombinedModel<Schema extends SchemaLike> extends AbstractMo
   }
 
   link(keyPath: string, store: Store<any>) {
-    super.link(keyPath, store)
-
-    this._linkChildren(this.children)
+    const onLink = super.link(keyPath, store)
+    const childrenOnLink = this._linkChildren(this.children)
 
     const sortedChildren = this._getSortedChildren(this.children)
     this.dependencies = this._createExternalDependencies(sortedChildren)
     this.children = sortedChildren
 
     this.accept = this._combineActionTypeMatchLists(sortedChildren)
+
+    return () => {
+      childrenOnLink.forEach(cb => cb())
+      onLink()
+    }
   }
 
   unlink() {
@@ -131,13 +135,13 @@ export default class CombinedModel<Schema extends SchemaLike> extends AbstractMo
   }
 
   private _linkChildren(children: Schema) {
-    Object
+    return Object
       .keys(children)
-      .forEach(<K extends keyof Schema>(k: K) => {
+      .map(<K extends keyof Schema>(k: K) => {
         const childKeyPath = (this.keyPath === '/')
           ? `/${k}`
           : `${this.keyPath}/${k}`
-        children[k].link(childKeyPath, this.store)
+        return children[k].link(childKeyPath, this.store)
       })
   }
 
