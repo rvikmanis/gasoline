@@ -172,8 +172,8 @@ function update(state: List<Todo> = List(), context: UpdateContext<{}, TodoActio
         case RETRY_TODO:
             if (index > -1) {
                 return state.update(index, todo => {
-                    const status = todo.status.endsWith("-failed") 
-                        ? todo.status.slice(0, -7) 
+                    const status = todo.status.endsWith("-failed")
+                        ? todo.status.slice(0, -7)
                         : todo.status
                     return { ...todo, status } as Todo.Pending
                 })
@@ -211,7 +211,6 @@ function process(action$: ActionsObservable, model: Model<List<Todo>>) {
         const update$ = action$
             .ofType(EDIT_TODO, MOVE_TODO)
             .filter(action => action.payload.id === id)
-            .observable
 
         return saveTodo$.delay(500).takeUntil(<any>update$ as Observable<interfaces.ActionLike>)
     })

@@ -84,7 +84,7 @@ function setup() {
             .interval(100)
             .take(4)
             .mapTo(inc())
-            .takeUntil(action$.ofType('STOP_DELAYED_INC').observable)
+            .takeUntil(action$.ofType('STOP_DELAYED_INC'))
         })
     }
   })

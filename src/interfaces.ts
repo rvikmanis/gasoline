@@ -2,8 +2,6 @@ import UpdateContext from './core/UpdateContext'
 import { Subscribable } from 'rxjs/Observable'
 import Store from "./core/Store";
 import ActionsObservable from "./core/ActionsObservable";
-import { Observable } from "rxjs/Observable";
-import { ISubscription, TeardownLogic } from "rxjs/Subscription";
 import { ActionCreators, DispatcherBoundActionCreators } from "./core/AbstractModel";
 
 export interface Dict<T> {

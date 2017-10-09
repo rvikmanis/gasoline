@@ -1,9 +1,7 @@
 import { ComponentType, ComponentClass, Component, createElement } from "react"
-import { Observable } from "rxjs/Observable";
-import { Subscription } from "rxjs/Subscription";
 import { Merge } from "../interfaces";
 import shallowEquals from "shallow-equals";
-import { Scheduler } from "rxjs";
+import { Scheduler, Subscription, Observable } from "rxjs";
 
 function connect<T extends object>(
     obs$: Observable<T>

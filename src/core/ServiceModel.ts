@@ -1,13 +1,12 @@
 import AbstractModel, { ActionCreators } from './AbstractModel'
 import UpdateContext from './UpdateContext'
 import { Dict, ModelInterface, UpdateHandler, ProcessHandler, SchemaLike, ActionLike, DispatchedActionLike, ServiceAdapter, ServiceBridge } from "../interfaces";
-import { Observable, Subscribable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
-import { TeardownLogic, Subscription } from 'rxjs/Subscription';
+import { TeardownLogic } from 'rxjs/Subscription';
+import { Subscribable } from "rxjs/Observable"
+import { ServiceModelState, ServiceControlMessage, ServiceReadyState } from "../interfaces"
+import { Observable, ReplaySubject, Subject, Subscription, Observer } from "rxjs";
 import ActionsObservable from "./ActionsObservable";
 import Store from "./Store";
-import { ServiceModelState, ServiceControlMessage, ServiceReadyState } from "../interfaces"
-import { ReplaySubject, Observer } from "rxjs";
 import ActionType from "../helpers/ActionType"
 import clone from "../helpers/clone";
 
@@ -82,9 +81,9 @@ export class ServiceModel extends AbstractModel<ServiceModelState, ServiceAction
         dispatch$.next(status$)
         dispatch$.next(filteredIncoming$)
 
-        let outgoing$ = action$
+        let outgoing$ = (action$
             // Prevent infinite dispatch cycles by excluding actions that originated here
-            .filter((action: DispatchedActionLike) => action.meta.origin !== origin)
+            .filter((action: DispatchedActionLike) => action.meta.origin !== origin) as ActionsObservable<ActionLike>)
             // Exclude store and service lifecycle actions
             .notOfType(...localActionTypes)
 
@@ -99,13 +98,11 @@ export class ServiceModel extends AbstractModel<ServiceModelState, ServiceAction
 
         const controlMessage$ = action$
             .ofType(ServiceModel.CLOSE, ServiceModel.OPEN)
-            // Skip `meta.replyTo` by accessing the normal observable for mapping
-            .observable.map(action => actionTypeControlMessageMap[action.type] as ServiceControlMessage)
+            .map(action => actionTypeControlMessageMap[action.type] as ServiceControlMessage) as ActionsObservable<ServiceControlMessage>
 
         const readyStateChange$ = action$
             .ofType(ServiceModel.READY_STATE_CHANGE)
-            // Skip `meta.replyTo` by accessing the normal observable for mapping
-            .observable.map(action => action.payload)
+            .map(action => action.payload) as ActionsObservable<ServiceReadyState>
 
         const bridge = {
             nextReadyState: (status: ServiceReadyState) => {

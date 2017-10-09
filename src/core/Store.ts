@@ -1,10 +1,8 @@
 import AbstractModel from "./AbstractModel";
 import { ActionLike, Dict, ModelInterface, SchemaLike, StateLike, ActionMeta, Listener, DispatchedActionMeta } from "../interfaces";
 import UpdateContext from "./UpdateContext";
-import { Observable } from 'rxjs/Observable';
 import { ISubscription } from 'rxjs/Subscription';
-import { Scheduler } from "rxjs"
-import { Subject } from 'rxjs/Subject'
+import { Scheduler, Observable, Subject } from "rxjs"
 import ActionsObservable from "./ActionsObservable";
 import uuid from '../vendor/uuid'
 import clone from "../helpers/clone";
@@ -50,7 +48,7 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
             action$ = action$.ofType(Store.START, Store.STOP, ...this.model.accept)
         }
 
-        this._actionStream$.next(action$.observable)
+        this._actionStream$.next(action$)
         this._subscription = Observable
             .from(this.model.process(action$, this.model))
             .subscribe(action => { this.dispatch(action) })
