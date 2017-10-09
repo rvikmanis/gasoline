@@ -36,14 +36,6 @@ export default class CombinedModel<Schema extends SchemaLike> extends AbstractMo
     this._unlinkChildren(this.children)
   }
 
-  getChild<K extends keyof Schema>(key: K) {
-    const child = this.children[key]
-    if (child !== undefined) {
-      return child
-    }
-    throw new Error(`Cannot find child at: ${key}`)
-  }
-
   dump<R>(state: this['state']) {
     const dump: {[K in keyof this['state']]?: R} = <any>{}
 
@@ -87,7 +79,7 @@ export default class CombinedModel<Schema extends SchemaLike> extends AbstractMo
       return model.process(a$, model)
     }
 
-    return ActionsObservable.merge(
+    return Observable.merge(
       ...Object.keys(this.children)
         .map(mapper)
     )
