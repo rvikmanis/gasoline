@@ -58,6 +58,11 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
         this.hasChildren = false
 
         this.state$ = Observable.create((observer: Observer<State>) => {
+            if (this.isDisposed) {
+                observer.error(`Cannot subscribe to disposed model: ${this.keyPath}`)
+                return
+            }
+
             const cancel = this._listenState(state => {
                 observer.next(state)
             })
