@@ -16,6 +16,7 @@ If you're building web apps with complex UIs, give it a try! Gasoline's high-lev
     1. [Models](#models)
     1. [Store and actions](#store-and-actions)
 1. [Installation](#installation)
+1. [Usage examples](#usage-examples)
 1. [Reference](#reference)
     1. [Model API](#model-api)
     1. [Store API](#store-api)
@@ -28,7 +29,32 @@ A model represents some part of the application's state along with actions and s
 
 >Note that models don't really hold state, instead each model keeps a reference to its state from the store.
 
-Models are created by instantiating the `Model` class:
+Models are created by instantiating the `Model` class.
+
+### Store and actions
+
+Since models don't hold state on their own, a store is required to actually do anything. There should be only one store per application.
+
+Store is created by instantiating the `Store` class.
+
+## Installation
+
+Via Yarn:
+
+```
+yarn add gasoline
+```
+
+Via NPM:
+
+```
+npm install --save gasoline
+```
+
+## Usage examples
+
+
+#### Basic usage
 
 ```ts
 const counter = new gasoline.Model({
@@ -46,7 +72,11 @@ const counter = new gasoline.Model({
     }
 
 });
+```
 
+#### Handling side effects
+
+```ts
 const autoIncrement = new gasoline.Model({
 
     initialState: false,
@@ -63,52 +93,67 @@ const autoIncrement = new gasoline.Model({
 
     process(action$, model) {
         return action$
+
+            // Every time a "TOGGLE_AUTO_INCREMENT" action is dispatched,
+            // and also when the store starts,
             .ofType("TOGGLE_AUTO_INCREMENT", Store.START)
-            .switchMap(() => {
+            .map(() => {
+
+                // check if auto increment is enabled: if it is,
+                // return a stream that emits "INCREMENT" actions every second,
                 if (model.state) {
                     const action = counter.actionCreators.increment()
                     return Observable.timer(1000).mapTo(action)
                 }
 
+                // otherwise return an empty stream.
                 return Observable.empty()
             })
-    },
 
-    acceptExtra: []
+            // Emit only from the latest inner stream.
+            .switch()
+    }
 
 });
 ```
 
-### Store and actions
-
-Since models don't hold state on their own, a store is required to actually do anything. There should be only one store per application and it can be created by instantiating the `Store` class:
+#### Creating the store
 
 ```ts
 const rootModel = gasoline.combineModels({
     counter,
     autoIncrement
 })
+
 const store = new gasoline.Store(rootModel)
-```
-
-Actions are dispatched on the store. But before we can do that, the store needs to be started:
-
-```ts
 store.start()
 ```
 
-## Installation
+#### Dispatching actions
 
-Via Yarn:
+```ts
+/**
+ * Invoked after the store has initialized its
+ * state and subscribed to models' side effects streams.
+ */
+function onReady() {
+    assert.strictEqual(counter.state, 0)
+    assert.strictEqual(autoIncrement.state, false)
 
-```
-yarn add gasoline
-```
+    // Let's dispatch our first action
+    counter.actions.increment()
 
-Via NPM:
+    // and verify that it executed.
+    assert.strictEqual(counter.state, 1)
 
-```
-npm install --save gasoline
+    // Cool.
+    // Time for auto incrementing:
+    autoIncrement.actions.toggle()
+    counter.state$.subscribe(count => {
+    })
+}
+
+store.ready(onReady)
 ```
 
 ## Reference
