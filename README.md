@@ -56,6 +56,11 @@ npm install --save gasoline
 #### Browser
 
 ```html
+<!-- Dependencies -->
+<script src="https://unpkg.com/rxjs@5/bundles/Rx.min.js"></script>
+<script src="https://unpkg.com/react@15/dist/react.min.js"></script>
+
+<!-- Gasoline -->
 <script src="https://unpkg.com/gasoline/dist/gasoline.min.js"></script>
 ```
 
@@ -106,18 +111,18 @@ const autoIncrement = new gasoline.Model({
 
             // Every time a "TOGGLE_AUTO_INCREMENT" action is dispatched,
             // and also when the store starts,
-            .ofType("TOGGLE_AUTO_INCREMENT", Store.START)
+            .ofType("TOGGLE_AUTO_INCREMENT", gasoline.Store.START)
             .map(() => {
 
                 // check if auto increment is enabled: if it is,
                 // return a stream that emits "INCREMENT" actions every second,
                 if (model.state) {
                     const action = counter.actionCreators.increment()
-                    return Observable.timer(1000).mapTo(action)
+                    return Rx.Observable.timer(1000).mapTo(action)
                 }
 
                 // otherwise return an empty stream.
-                return Observable.empty()
+                return Rx.Observable.empty()
             })
 
             // Emit only from the latest inner stream.
