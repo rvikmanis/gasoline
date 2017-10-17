@@ -39,17 +39,27 @@ Store is created by instantiating the `Store` class.
 
 ## Installation
 
-Via Yarn:
+We haven't yet released, but once we do, Gasoline will be available on *npm*.
 
+#### Node.js
+
+We recommend installing with [Yarn](https://yarnpkg.com/), because it's faster.
 ```
 yarn add gasoline
 ```
 
-Via NPM:
-
+But *npm* works too.
 ```
 npm install --save gasoline
 ```
+
+#### Browser
+
+```html
+<script src="https://unpkg.com/gasoline/dist/gasoline.min.js"></script>
+```
+
+Makes the API available as `window.gasoline`.
 
 ## Usage examples
 
