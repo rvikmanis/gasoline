@@ -1,23 +1,23 @@
 import { AbstractModel } from './AbstractModel'
 import { UpdateContext } from './UpdateContext'
-import { SchemaLike, UpdateHandler, ProcessHandler, ActionCreators, ActionLike } from "../interfaces";
+import { SchemaLike, Reducer, Epic, ActionCreatorMap, ActionLike } from "../interfaces";
 import { Observable } from "rxjs";
 
-export class Model<S = void, AC extends ActionCreators = {}, D extends SchemaLike = {}> extends AbstractModel<S, AC, D> {
-    update: UpdateHandler<S, D>;
-    process: ProcessHandler<this>;
+export class Model<State = void, ActionCreators extends ActionCreatorMap = {}, Dependencies extends SchemaLike = {}> extends AbstractModel<State, ActionCreators, Dependencies> {
+    update: Reducer<State, Dependencies>;
+    process: Epic<this>;
 
     constructor(options: {
-        dependencies?: D,
-        update?: UpdateHandler<S, D>,
-        process?: ProcessHandler<Model<S, AC, D>>,
-        initialState?: S,
-        actionHandlers?: { [key: string]: UpdateHandler<S, D> },
+        dependencies?: Dependencies,
+        update?: Reducer<State, Dependencies>,
+        process?: Epic<Model<State, ActionCreators, Dependencies>>,
+        initialState?: State,
+        actionHandlers?: { [key: string]: Reducer<State, Dependencies> },
         accept?: string[],
         acceptExtra?: string[],
-        dump?: (state: S | void) => any,
-        load?: (dump: any, updateContext: UpdateContext<SchemaLike>) => S | void,
-        actionCreators?: AC,
+        dump?: (state: State | void) => any,
+        load?: (dump: any, updateContext: UpdateContext<SchemaLike>) => State | void,
+        actionCreators?: ActionCreators,
         persistent?: boolean
     }) {
         super()
@@ -28,7 +28,7 @@ export class Model<S = void, AC extends ActionCreators = {}, D extends SchemaLik
             acceptExtra,
             actionCreators,
             initialState,
-            update = ((s: S) => s),
+            update = ((s: State) => s),
             process = (() => Observable.empty()),
             actionHandlers = {},
             dump,
@@ -59,7 +59,7 @@ export class Model<S = void, AC extends ActionCreators = {}, D extends SchemaLik
             this._actionCreators = actionCreators
         }
 
-        this.update = (state: S = initialState as S, updateContext) => {
+        this.update = (state: State = initialState as State, updateContext) => {
             const { genericActionType } = updateContext
             if (genericActionType in actionHandlers) {
                 state = actionHandlers[genericActionType](state, updateContext)

@@ -74,7 +74,7 @@ export class UpdateContext<Dependencies extends SchemaLike, A extends ActionLike
   public setModel<Model extends ModelInterface>(model: Model) {
     this.model = model
     this.compute()
-    return this as UpdateContext<Model['dependencies']>
+    return this as UpdateContext<Model['dependencies'], A>
   }
 
   public updateDigest(nextState: any) {

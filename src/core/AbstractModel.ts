@@ -1,4 +1,4 @@
-import { Dict, ActionCreators, DispatcherBoundActionCreators, ModelInterface, UpdateHandler, ProcessHandler, SchemaLike, ActionLike } from "../interfaces";
+import { Dict, ActionCreatorMap, DispatcherBoundActionCreatorMap, ModelInterface, Reducer, Epic, SchemaLike, ActionLike } from "../interfaces";
 import { UpdateContext } from "./UpdateContext";
 import { Store } from "./Store";
 import { Observable, Subscription, Observer } from "rxjs";
@@ -20,16 +20,16 @@ function createDeferred<T>() {
     return deferred
 }
 
-export abstract class AbstractModel<State, AC extends ActionCreators = {}, Dependencies extends SchemaLike = {}> implements ModelInterface {
-    protected _actionCreators: AC;
-    private _linkedActionCreators: AC;
-    private _actions: DispatcherBoundActionCreators<AC>;
+export abstract class AbstractModel<State, ActionCreators extends ActionCreatorMap = {}, Dependencies extends SchemaLike = {}> implements ModelInterface {
+    protected _actionCreators: ActionCreators;
+    private _linkedActionCreators: ActionCreators;
+    private _actions: DispatcherBoundActionCreatorMap<ActionCreators>;
     private _allSubscriptions: Subscription;
     private _whenLinked: Deferred<void>
     private _actionTypeMatchCache: Dict<boolean>
 
-    public abstract update: UpdateHandler<State, Dependencies>;
-    public abstract process: ProcessHandler<this>;
+    public abstract update: Reducer<State, Dependencies>;
+    public abstract process: Epic<this>;
     public dependencies: Dependencies;
     public isLinked: boolean
     public isDisposed: boolean
@@ -44,7 +44,7 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
             throw new TypeError('Cannot instantiate abstract class AbstractModel')
         }
 
-        this._actionCreators = {} as AC
+        this._actionCreators = {} as ActionCreators
         this._allSubscriptions = new Subscription
         this._whenLinked = createDeferred()
         this._actionTypeMatchCache = {}

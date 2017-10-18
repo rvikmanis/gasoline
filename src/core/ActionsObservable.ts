@@ -1,4 +1,4 @@
-import { ActionLike, DispatchedActionLike, ModelInterface } from "../interfaces";
+import { ActionLike, ModelInterface } from "../interfaces";
 import { Operator } from "rxjs/Operator";
 import { ObservableInput } from 'rxjs/Observable'
 import { IScheduler } from "rxjs/Scheduler";
@@ -46,7 +46,7 @@ export class ActionsObservable<T = ActionLike> extends Observable<T> {
       throw new Error(`action$.model is undefined`);
     }
 
-    return this.filter((action: T & DispatchedActionLike) => {
+    return this.filter((action: T & ActionLike) => {
       const genericActionType = ActionType.getGenericOrLiteralForModel(action.type, this.model)
       return matchValue === matchActionType(actionTypes, genericActionType, cache)
     }) as ActionsObservable<T>

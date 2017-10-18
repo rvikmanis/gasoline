@@ -7,7 +7,9 @@ export interface Dict<T> {
   [key: string]: T
 }
 
-export type Listener = () => void
+export interface Listener {
+  (): void
+}
 
 export interface ActionMeta {
   dispatch?: {
@@ -19,13 +21,7 @@ export interface ActionMeta {
   origin?: string
 }
 
-export interface ActionLike {
-  type: string;
-  meta?: ActionMeta;
-  payload?: any;
-}
-
-export interface DispatchedActionMeta extends ActionMeta {
+export interface DispatchedActionMeta {
   dispatch: {
     id: string,
     time: number,
@@ -33,17 +29,22 @@ export interface DispatchedActionMeta extends ActionMeta {
   }
 }
 
-export interface DispatchedActionLike extends ActionLike {
-  meta: DispatchedActionMeta
+export interface ActionLike {
+  type: string;
+  meta?: ActionMeta;
+  payload?: any;
 }
 
-export type ActionCreators = { [key: string]: (...args: any[]) => ActionLike }
-export type DispatcherBoundActionCreators<AC extends ActionCreators> = {[K in keyof AC]: (...args: any[]) => void }
+export interface ActionCreator {
+  (...args: any[]): ActionLike
+}
+export type ActionCreatorMap = Dict<ActionCreator>
+export type DispatcherBoundActionCreatorMap<AC extends ActionCreatorMap> = {[K in keyof AC]: (...args: any[]) => void }
 
 export interface ModelInterface {
   accept?: string[];
-  update: UpdateHandler<any, SchemaLike>;
-  process: ProcessHandler<ModelInterface>;
+  update: Reducer<any, SchemaLike>;
+  process: Epic<ModelInterface>;
   dependencies: SchemaLike;
   state: any;
 
@@ -53,8 +54,8 @@ export interface ModelInterface {
   isDisposed: boolean;
   hasChildren: boolean;
 
-  actionCreators: ActionCreators;
-  actions: DispatcherBoundActionCreators<any>;
+  actionCreators: ActionCreatorMap;
+  actions: DispatcherBoundActionCreatorMap<any>;
 
   getStateFromDigest(digest: Dict<any>): any;
   matchActionType(actionType: string): boolean;
@@ -64,13 +65,13 @@ export interface ModelInterface {
   unlink(): void;
 }
 
-export type UpdateHandler<S, D extends SchemaLike> = (
-  (state: S, context: UpdateContext<D>) => S
-)
+export interface Reducer<S, D extends SchemaLike> {
+  (state: S, context: UpdateContext<D>): S
+}
 
-export type ProcessHandler<Model extends ModelInterface> = (
-  (action$: ActionsObservable, model: Model) => Subscribable<ActionLike>
-)
+export interface Epic<Model extends ModelInterface> {
+  (action$: ActionsObservable, model: Model): Subscribable<ActionLike>
+}
 
 export type SchemaLike = Dict<ModelInterface>
 export type StateLike<S extends SchemaLike> = {[K in keyof S]: S[K]['state']}
