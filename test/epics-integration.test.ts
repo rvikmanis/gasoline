@@ -104,8 +104,6 @@ describe("Scenario #1", () => {
     });
 
     test("Is valid", () => {
-        console.time("Scenario #1")
-
         let derivedTextStates: any[] = []
 
         store.ready(() => {
@@ -143,8 +141,6 @@ describe("Scenario #1", () => {
                 "HELLO WORLD,5",
                 "HELLO WORLD,6"
             ])
-
-            console.timeEnd("Scenario #1")
         }).toPromise()
 
         store.start()
