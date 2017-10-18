@@ -9,7 +9,8 @@
     "b:_build": "tsc && cp -R ./src/vendor ./build/step-1 && rollup -c",
     "b:_minify": "babili --source-maps=true -o build/step-2/gasoline.min.js build/step-2/gasoline.js",
     "b:_dist": "cp -R ./build/step-2 ./dist && cp -R ./build/typings ./dist/typings",
-    "build": "yarn b:_clean && yarn b:_build && yarn b:_minify && yarn b:_dist"
+    "b:_remove_build_dir": "rm -rf ./build",
+    "build": "yarn b:_clean && yarn b:_build && yarn b:_minify && yarn b:_dist && yarn b:_remove_build_dir"
   },
   "main": "dist/gasoline.js",
   "types": "dist/typings/index.d.ts",
