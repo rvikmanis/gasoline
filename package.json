@@ -55,9 +55,8 @@
     "ws": "2.3.1"
   },
   "dependencies": {
-    "prop-types": "^15.5.10",
-    "react": "^15.5.4",
-    "rxjs": "^5.4.0"
+    "react": "15.6",
+    "rxjs": "5"
   },
   "jest": {
     "testEnvironment": "jest-environment-jsdom",
