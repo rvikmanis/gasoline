@@ -306,7 +306,7 @@ test('Loading', () => {
   })
 })
 
-test('Async actions', () => {
+test('Side effects', () => {
   store.start()
 
   store.dispatch({ type: 'DELAYED_INC' })
@@ -320,7 +320,7 @@ test('Async actions', () => {
     .toPromise()
 })
 
-test('Async action cancellation', () => {
+test('Side effect cancellation', () => {
   store.start()
 
   store.dispatch({ type: 'DELAYED_INC' })
