@@ -75,32 +75,6 @@ export type ProcessHandler<Model extends ModelInterface> = (
 export type SchemaLike = Dict<ModelInterface>
 export type StateLike<S extends SchemaLike> = {[K in keyof S]: S[K]['state']}
 
-export type ServiceReadyState = "connecting" | "open" | "closing" | "closed"
-
-export type ServiceModelState = {
-  status: "initial" | ServiceReadyState
-}
-
-export type ServiceControlMessage = "open" | "close"
-
-export interface ServiceBridge {
-  nextReadyState(status: ServiceReadyState): void;
-  throw(error: Error): void;
-  dispatch(action: ActionLike): void;
-  // discrepancy between ServiceReadyState and ServiceModelState["status"] exists because `initial`
-  // is a valid status to have, as it is the initial status of any service, but it is not a
-  // valid status to set at any later point in service lifecycle.
-  getStatus(): ServiceModelState["status"]
-}
-
-export interface ServiceAdapter {
-  install(bridge: ServiceBridge): void;
-  onAction(action: ActionLike): void;
-  onInitial(): void;
-  onReadyState(status: ServiceReadyState): void;
-  onControlMessage(msg: ServiceControlMessage): void;
-}
-
 export type Merge<V> = {
   [K in keyof Record<keyof V, any>]: V[K]
 }

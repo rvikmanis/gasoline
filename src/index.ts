@@ -35,6 +35,4 @@ export function combineModels<Schema extends interfaces.SchemaLike>(schema: Sche
     return new CombinedModel(schema)
 }
 
-export { ServiceModel } from './core/ServiceModel'
-export { WebSocketServiceAdapter } from './core/WebSocketServiceAdapter'
 export { connect } from './core/connect'
