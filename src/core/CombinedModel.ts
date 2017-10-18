@@ -214,3 +214,7 @@ export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<Stat
       .reduce(dependencyReducer, {})
   }
 }
+
+export function combineModels<Schema extends SchemaLike>(schema: Schema) {
+  return new CombinedModel(schema)
+}
