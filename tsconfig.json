@@ -14,5 +14,9 @@
   "include": [
     "./src/**/*",
     "./lib.d.ts"
+  ],
+  "exclude": [
+    "./test/**/*",
+    "./examples/**/*"
   ]
 }
