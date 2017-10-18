@@ -64,10 +64,7 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
                 observer.next(state)
             })
 
-            this._allSubscriptions.add(() => {
-                cancel();
-                observer.complete();
-            })
+            this._allSubscriptions.add(cancel)
 
             return cancel;
         })

@@ -43,7 +43,7 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
         }
         this.isStarted = true
 
-        let action$ = ActionsObservable.from(this._input$, Scheduler.async).withModel(this.model)
+        let action$ = ActionsObservable.from(this._input$).withModel(this.model)
         if (this.model.accept) {
             action$ = action$.ofType(Store.START, Store.STOP, ...this.model.accept)
         }
@@ -70,16 +70,14 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
     }
 
     ready(callback: () => void) {
-        setTimeout(() => {
-            if (this.isStarted) {
-                callback()
-                return
-            }
-            const stopListening = this.listen("started", () => {
-                callback()
-                stopListening()
-            })
-        }, 0)
+        if (this.isStarted) {
+            callback()
+            return
+        }
+        const stopListening = this.listen("started", () => {
+            callback()
+            stopListening()
+        })
     }
 
     dispatch = (input: ActionLike) => {
@@ -157,7 +155,9 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
     private _invokeListeners(eventName: string) {
         const listeners = this._listeners[eventName]
         if (listeners) {
-            listeners.forEach(listener => { listener() })
+            listeners.forEach(listener => {
+                listener()
+            })
         }
     }
 
@@ -174,7 +174,7 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
         const updated = ctx.workingState.updated
         Object.keys(updated).forEach(keyPath => {
             if (updated[keyPath]) {
-                this._invokeListeners(`updated ${keyPath}`)
+                this._invokeListeners(`update ${keyPath}`)
             }
         })
     }

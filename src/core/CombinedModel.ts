@@ -73,7 +73,7 @@ export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<Stat
       let a$ = action$.withModel(model)
 
       if (model.accept) {
-        a$ = action$.ofType(Store.START, Store.STOP, ...model.accept)
+        a$ = action$.withModel(model).ofType(Store.START, Store.STOP, ...model.accept)
       }
 
       return model.process(a$, model)

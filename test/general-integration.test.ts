@@ -314,6 +314,7 @@ test('Async actions', () => {
 
   return Observable
     .interval(100)
+    .map(i => i + 1)
     .do(i => expect(counter.state).toBe(Math.min(i, 4)))
     .take(6)
     .toPromise()
@@ -332,6 +333,7 @@ test('Async action cancellation', () => {
 
   const assertion$ = Observable
     .interval(100)
+    .map(i => i + 1)
     .do(i => expect(counter.state).toBe(Math.min(i, 2)))
     .take(6)
 
