@@ -1,14 +1,14 @@
-import AbstractModel, { ActionCreators } from './AbstractModel'
-import UpdateContext from './UpdateContext'
-import { Dict, ModelInterface, UpdateHandler, ProcessHandler, SchemaLike, ActionLike, DispatchedActionLike, ServiceAdapter, ServiceBridge } from "../interfaces";
+import { AbstractModel } from './AbstractModel'
+import { UpdateContext } from './UpdateContext'
+import { Dict, ModelInterface, ActionCreators, UpdateHandler, ProcessHandler, SchemaLike, ActionLike, DispatchedActionLike, ServiceAdapter, ServiceBridge } from "../interfaces";
 import { TeardownLogic } from 'rxjs/Subscription';
 import { Subscribable } from "rxjs/Observable"
 import { ServiceModelState, ServiceControlMessage, ServiceReadyState } from "../interfaces"
 import { Observable, ReplaySubject, Subject, Subscription, Observer } from "rxjs";
-import ActionsObservable from "./ActionsObservable";
-import Store from "./Store";
-import ActionType from "../helpers/ActionType"
-import clone from "../helpers/clone";
+import { ActionsObservable } from "./ActionsObservable";
+import { Store } from "./Store";
+import { ActionType } from "../helpers/ActionType"
+import { clone } from "../helpers/clone";
 
 export type ServiceActionCreators = {
     open: (...args: any[]) => ActionLike;
@@ -207,5 +207,3 @@ export class ServiceModel extends AbstractModel<ServiceModelState, ServiceAction
         this.accept = accept
     }
 }
-
-export default ServiceModel

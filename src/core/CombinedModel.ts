@@ -1,13 +1,13 @@
 import { Dict, ActionLike, ModelInterface, StateLike, SchemaLike } from "../interfaces";
 import { relative } from 'path'
-import UpdateContext from "./UpdateContext";
-import Toposort from 'toposort-class'
-import AbstractModel from "./AbstractModel";
+import { UpdateContext } from "./UpdateContext";
+import { AbstractModel } from "./AbstractModel";
 import { Observable } from 'rxjs';
-import ActionsObservable from "./ActionsObservable";
-import Store from "./Store";
+import { ActionsObservable } from "./ActionsObservable";
+import { Store } from "./Store";
+import Toposort from 'toposort-class'
 
-export default class CombinedModel<Schema extends SchemaLike> extends AbstractModel<StateLike<Schema>> {
+export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<StateLike<Schema>> {
   public children: Schema;
 
   constructor(schema: Schema) {

@@ -1,6 +1,6 @@
 import { Dict } from "../interfaces";
 
-export default function clone<T extends Dict<any>>(obj: T): T {
+export function clone<T extends Dict<any>>(obj: T): T {
     const keys = Object.keys(obj);
     const target = {} as T;
     const length = keys.length;

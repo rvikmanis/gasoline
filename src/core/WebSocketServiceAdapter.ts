@@ -1,6 +1,6 @@
 import { ServiceAdapter, ServiceBridge, ActionLike, ServiceControlMessage, ServiceReadyState } from "../interfaces";
 
-export default class WebSocketServiceAdapter implements ServiceAdapter {
+export class WebSocketServiceAdapter implements ServiceAdapter {
     url: string;
     autoConnect: boolean;
 

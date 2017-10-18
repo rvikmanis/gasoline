@@ -1,5 +1,5 @@
-import CombinedModel from './CombinedModel'
-import AbstractModel from './AbstractModel'
+import { CombinedModel } from './CombinedModel'
+import { AbstractModel } from './AbstractModel'
 import { ModelInterface } from "../interfaces";
 
 class FakeModel extends AbstractModel<any> {

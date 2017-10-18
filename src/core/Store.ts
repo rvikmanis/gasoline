@@ -1,11 +1,11 @@
-import AbstractModel from "./AbstractModel";
+import { AbstractModel } from "./AbstractModel";
 import { ActionLike, Dict, ModelInterface, SchemaLike, StateLike, ActionMeta, Listener, DispatchedActionMeta } from "../interfaces";
-import UpdateContext from "./UpdateContext";
+import { UpdateContext } from "./UpdateContext";
 import { ISubscription } from 'rxjs/Subscription';
 import { Scheduler, Observable, Subject } from "rxjs"
-import ActionsObservable from "./ActionsObservable";
+import { ActionsObservable } from "./ActionsObservable";
+import { clone } from "../helpers/clone";
 import uuid from '../vendor/uuid'
-import clone from "../helpers/clone";
 
 export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLike<Schema> = StateLike<Schema>> {
     static START = 'gasoline.Store.START'
@@ -184,5 +184,3 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
         return new UpdateContext(action, this.model, workingState)
     }
 }
-
-export default Store

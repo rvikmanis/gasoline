@@ -1,7 +1,7 @@
 import { ComponentType, ComponentClass, Component, createElement } from "react"
 import { Merge } from "../interfaces";
-import shallowEquals from "shallow-equals";
 import { Scheduler, Subscription, Observable } from "rxjs";
+import shallowEquals from "shallow-equals";
 
 function connect<T extends object>(
     obs$: Observable<T>
@@ -84,4 +84,4 @@ function connect(
     }
 }
 
-export default connect;
+export { connect };

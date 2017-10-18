@@ -2,7 +2,7 @@ import { Dict } from '../interfaces'
 
 export type Mapper<T, K, V> = (item: T, key: K) => V
 
-export default function mapValues<T extends C[keyof C], V, C extends Dict<any>>(
+export function mapValues<T extends C[keyof C], V, C extends Dict<any>>(
   collection: C,
   mapper: Mapper<T, keyof C, V>
 ): {[K in keyof C]: V } {

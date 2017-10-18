@@ -1,8 +1,7 @@
-import UpdateContext from './core/UpdateContext'
+import { UpdateContext } from './core/UpdateContext'
 import { Subscribable } from 'rxjs/Observable'
-import Store from "./core/Store";
-import ActionsObservable from "./core/ActionsObservable";
-import { ActionCreators, DispatcherBoundActionCreators } from "./core/AbstractModel";
+import { Store } from "./core/Store";
+import { ActionsObservable } from "./core/ActionsObservable";
 
 export interface Dict<T> {
   [key: string]: T
@@ -37,6 +36,9 @@ export interface DispatchedActionMeta extends ActionMeta {
 export interface DispatchedActionLike extends ActionLike {
   meta: DispatchedActionMeta
 }
+
+export type ActionCreators = { [key: string]: (...args: any[]) => ActionLike }
+export type DispatcherBoundActionCreators<AC extends ActionCreators> = {[K in keyof AC]: (...args: any[]) => void }
 
 export interface ModelInterface {
   accept?: string[];

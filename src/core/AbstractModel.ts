@@ -1,14 +1,11 @@
-import { Dict, ModelInterface, UpdateHandler, ProcessHandler, SchemaLike, ActionLike } from "../interfaces";
-import UpdateContext from "./UpdateContext";
-import matchActionType from '../helpers/matchActionType'
-import Store from "./Store";
+import { Dict, ActionCreators, DispatcherBoundActionCreators, ModelInterface, UpdateHandler, ProcessHandler, SchemaLike, ActionLike } from "../interfaces";
+import { UpdateContext } from "./UpdateContext";
+import { Store } from "./Store";
 import { Observable, Subscription, Observer } from "rxjs";
-import mapValues from "../helpers/mapValues";
-import clone from "../helpers/clone";
-import ActionType from "../helpers/ActionType";
-
-export type ActionCreators = { [key: string]: (...args: any[]) => ActionLike }
-export type DispatcherBoundActionCreators<AC extends ActionCreators> = {[K in keyof AC]: (...args: any[]) => void }
+import { mapValues } from "../helpers/mapValues";
+import { clone } from "../helpers/clone";
+import { matchActionType } from '../helpers/matchActionType'
+import { ActionType } from "../helpers/ActionType";
 
 type Deferred<T> = {
     promise: Promise<T>,
@@ -190,5 +187,3 @@ export abstract class AbstractModel<State, AC extends ActionCreators = {}, Depen
         }
     }
 }
-
-export default AbstractModel

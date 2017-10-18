@@ -1,4 +1,4 @@
-import AbstractModel from './AbstractModel'
+import { AbstractModel } from './AbstractModel'
 import { ModelInterface } from "../interfaces";
 
 class ConcreteModel extends AbstractModel<any> {

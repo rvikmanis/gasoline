@@ -1,10 +1,10 @@
+import { ActionLike, DispatchedActionLike, ModelInterface } from "../interfaces";
 import { Operator } from "rxjs/Operator";
 import { ObservableInput } from 'rxjs/Observable'
 import { IScheduler } from "rxjs/Scheduler";
 import { Observable } from 'rxjs'
-import ActionType from "../helpers/ActionType"
-import { ActionLike, DispatchedActionLike, ModelInterface } from "../interfaces";
-import matchActionType from "../helpers/matchActionType";
+import { ActionType } from "../helpers/ActionType"
+import { matchActionType } from "../helpers/matchActionType";
 
 export class ActionsObservable<T = ActionLike> extends Observable<T> {
   protected model: ModelInterface
@@ -60,5 +60,3 @@ export class ActionsObservable<T = ActionLike> extends Observable<T> {
     return this._matchType(actionTypes, false)
   }
 }
-
-export default ActionsObservable

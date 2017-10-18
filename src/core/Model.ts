@@ -1,6 +1,6 @@
-import AbstractModel, { ActionCreators } from './AbstractModel'
-import UpdateContext from './UpdateContext'
-import { SchemaLike, UpdateHandler, ProcessHandler, ActionLike } from "../interfaces";
+import { AbstractModel } from './AbstractModel'
+import { UpdateContext } from './UpdateContext'
+import { SchemaLike, UpdateHandler, ProcessHandler, ActionCreators, ActionLike } from "../interfaces";
 import { Observable } from "rxjs";
 
 export class Model<S = void, AC extends ActionCreators = {}, D extends SchemaLike = {}> extends AbstractModel<S, AC, D> {
@@ -83,5 +83,3 @@ export class Model<S = void, AC extends ActionCreators = {}, D extends SchemaLik
         }
     }
 }
-
-export default Model

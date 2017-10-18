@@ -1,6 +1,6 @@
 import { Dict } from "../interfaces";
 
-export default function matchActionType(
+export function matchActionType(
   actionTypeList: string[],
   actionType: string,
   cache?: Dict<boolean>

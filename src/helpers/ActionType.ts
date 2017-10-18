@@ -1,6 +1,6 @@
 import { relative } from 'path'
 import { ModelInterface, ActionLike } from "../interfaces";
-import clone from "./clone";
+import { clone } from "./clone";
 
 namespace ActionType {
     const _cache: { [key: string]: Descriptor } = {};
@@ -160,4 +160,4 @@ namespace ActionType {
     export type Descriptor = BasicDescriptor | GenericDescriptor | BoundGenericDescriptor;
 }
 
-export default ActionType
+export { ActionType }
