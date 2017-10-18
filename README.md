@@ -118,7 +118,7 @@ const autoIncrement = new gasoline.Model({
                 // return a stream that emits "INCREMENT" actions every second,
                 if (model.state) {
                     const action = counter.actionCreators.increment()
-                    return Rx.Observable.timer(1000).mapTo(action)
+                    return Rx.Observable.interval(1000).mapTo(action)
                 }
 
                 // otherwise return an empty stream.
@@ -161,10 +161,15 @@ function onReady() {
     // and verify that it executed.
     assert.strictEqual(counter.state, 1)
 
-    // Cool.
-    // Time for auto incrementing:
+    // Now let's enable auto incrementation
     autoIncrement.actions.toggle()
+    assert.strictEqual(autoIncrement.state, true)
     counter.state$.subscribe(count => {
+        if (count > 9) {
+            // and disable it after 10 times.
+            autoIncrement.actions.toggle()
+            assert.strictEqual(autoIncrement.state, false)
+        }
     })
 }
 
