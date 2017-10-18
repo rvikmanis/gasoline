@@ -74,7 +74,3 @@ export type ProcessHandler<Model extends ModelInterface> = (
 
 export type SchemaLike = Dict<ModelInterface>
 export type StateLike<S extends SchemaLike> = {[K in keyof S]: S[K]['state']}
-
-export type Merge<V> = {
-  [K in keyof Record<keyof V, any>]: V[K]
-}

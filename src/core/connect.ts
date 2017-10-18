@@ -1,5 +1,4 @@
 import { ComponentType, ComponentClass, Component, createElement } from "react"
-import { Merge } from "../interfaces";
 import { Scheduler, Subscription, Observable } from "rxjs";
 import shallowEquals from "shallow-equals";
 
@@ -10,18 +9,18 @@ function connect<T extends object>(
 function connect<R extends object, T, P extends object>(
     obs$: Observable<T>,
     mapper: ((state: T, ownProps: P) => R)
-): (component: ComponentType<Merge<R>>) => ComponentClass<P>;
+): (component: ComponentType<R>) => ComponentClass<P>;
 
 function connect<T extends object, S extends object>(
     obs$: Observable<T>,
     staticProps: S
-): (component: ComponentType<Merge<T & S>>) => ComponentClass<{}>;
+): (component: ComponentType<T & S>) => ComponentClass<{}>;
 
 function connect<R extends object, T, P extends object, S extends object>(
     obs$: Observable<T>,
     mapper: ((state: T, ownProps: P) => R),
     staticProps: S
-): (component: ComponentType<Merge<R & S>>) => ComponentClass<P>;
+): (component: ComponentType<R & S>) => ComponentClass<P>;
 
 function connect(
     obs$: Observable<any>,
