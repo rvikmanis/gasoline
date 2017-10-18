@@ -1,5 +1,5 @@
 import { AbstractModel } from "./AbstractModel";
-import { ActionLike, Dict, ModelInterface, SchemaLike, StateLike, ActionMeta, Listener, DispatchedActionMeta } from "../interfaces";
+import { ActionLike, Dict, ModelInterface, Schema, StateOf, ActionMeta, Listener, DispatchedActionMeta } from "../interfaces";
 import { UpdateContext } from "./UpdateContext";
 import { ISubscription } from 'rxjs/Subscription';
 import { Scheduler, Observable, Subject } from "rxjs"
@@ -7,7 +7,7 @@ import { ActionsObservable } from "./ActionsObservable";
 import { clone } from "../helpers/clone";
 import uuid from '../vendor/uuid'
 
-export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLike<Schema> = StateLike<Schema>> {
+export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
     static START = 'gasoline.Store.START'
     static STOP = 'gasoline.Store.STOP'
     static LOAD = 'gasoline.Store.LOAD'
@@ -21,9 +21,9 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
     public isStarted: boolean;
     public digest: Dict<any>;
     public action$: Observable<ActionLike>;
-    public model: AbstractModel<State>;
+    public model: M;
 
-    constructor(model: AbstractModel<State>) {
+    constructor(model: M) {
         this._listeners = {}
         this._input$ = new Subject<ActionLike>()
         this._actionStream$ = new Subject<Observable<ActionLike>>()
@@ -111,7 +111,7 @@ export class Store<Schema extends SchemaLike = SchemaLike, State extends StateLi
         }
     }
 
-    replaceModel(model: AbstractModel<State>) {
+    replaceModel(model: M) {
         if (this.isStarted) {
             throw new Error(`Cannot replace model on a running store. Call store.stop() before calling store.replaceModel(newModel)`);
         }

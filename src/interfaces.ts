@@ -43,9 +43,9 @@ export type DispatcherBoundActionCreatorMap<AC extends ActionCreatorMap> = {[K i
 
 export interface ModelInterface {
   accept?: string[];
-  update: Reducer<any, SchemaLike>;
+  update: Reducer<any, Schema>;
   process: Epic<ModelInterface>;
-  dependencies: SchemaLike;
+  dependencies: Schema;
   state: any;
 
   keyPath: string;
@@ -60,12 +60,12 @@ export interface ModelInterface {
   getStateFromDigest(digest: Dict<any>): any;
   matchActionType(actionType: string): boolean;
   dump(state: any): any;
-  load(dump: any, updateContext: UpdateContext<SchemaLike>): any;
+  load(dump: any, updateContext: UpdateContext<Schema>): any;
   link(keyPath: string, store: any): () => void;
   unlink(): void;
 }
 
-export interface Reducer<S, D extends SchemaLike> {
+export interface Reducer<S, D extends Schema> {
   (state: S, context: UpdateContext<D>): S
 }
 
@@ -73,5 +73,5 @@ export interface Epic<Model extends ModelInterface> {
   (action$: ActionsObservable, model: Model): Subscribable<ActionLike>
 }
 
-export type SchemaLike = Dict<ModelInterface>
-export type StateLike<S extends SchemaLike> = {[K in keyof S]: S[K]['state']}
+export type Schema = Dict<ModelInterface>
+export type StateOf<S extends Schema> = {[K in keyof S]: S[K]['state']}

@@ -1,4 +1,4 @@
-import { ModelInterface, ActionLike, Dict, StateLike, SchemaLike } from "../interfaces";
+import { ModelInterface, ActionLike, Dict, StateOf, Schema } from "../interfaces";
 import { Store } from "./Store";
 import { mapValues } from "../helpers/mapValues";
 import { ActionType } from "../helpers/ActionType";
@@ -12,7 +12,7 @@ const createEmptyWorkingState = () => (
   { digest: {}, updated: {} }
 )
 
-export class UpdateContext<Dependencies extends SchemaLike, A extends ActionLike = ActionLike> {
+export class UpdateContext<Dependencies extends Schema, A extends ActionLike = ActionLike> {
   public readonly action: A;
   public model: ModelInterface;
   public workingState: WorkingState;
@@ -23,7 +23,7 @@ export class UpdateContext<Dependencies extends SchemaLike, A extends ActionLike
   public genericActionType: string;
 
   private _dependencies: any;
-  public get dependencies(): StateLike<Dependencies> {
+  public get dependencies(): StateOf<Dependencies> {
     if (this._dependencies !== undefined) {
       return this._dependencies
     }

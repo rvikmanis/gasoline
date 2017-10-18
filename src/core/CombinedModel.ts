@@ -1,4 +1,4 @@
-import { Dict, ActionLike, ModelInterface, StateLike, SchemaLike } from "../interfaces";
+import { Dict, ActionLike, ModelInterface, StateOf, Schema } from "../interfaces";
 import { relative } from 'path'
 import { UpdateContext } from "./UpdateContext";
 import { AbstractModel } from "./AbstractModel";
@@ -7,13 +7,13 @@ import { ActionsObservable } from "./ActionsObservable";
 import { Store } from "./Store";
 import Toposort from 'toposort-class'
 
-export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<StateLike<Schema>> {
-  public children: Schema;
+export class CombinedModel<Children extends Schema> extends AbstractModel<StateOf<Children>> {
+  public children: Children;
 
-  constructor(schema: Schema) {
+  constructor(children: Children) {
     super()
-    this.children = schema
-    this.accept = this._combineActionTypeMatchLists(schema)
+    this.children = children
+    this.accept = this._combineActionTypeMatchLists(children)
     this.hasChildren = true
   }
 
@@ -51,13 +51,13 @@ export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<Stat
     }
   }
 
-  load<R>(dump: {[K in keyof this['state']]?: R} = {}, updateContext: UpdateContext<SchemaLike>): this['state'] {
+  load<R>(dump: {[K in keyof this['state']]?: R} = {}, updateContext: UpdateContext<Schema>): this['state'] {
     const state: this['state'] = <any>{}
 
     Object.keys(this.children).forEach(key => {
       const childState = this.children[key].load(
         dump[key],
-        (updateContext as UpdateContext<SchemaLike>).setModel(this.children[key])
+        (updateContext as UpdateContext<Schema>).setModel(this.children[key])
       )
       if (childState !== undefined) {
         state[key] = childState
@@ -68,7 +68,7 @@ export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<Stat
   }
 
   process = (action$: ActionsObservable) => {
-    const mapper = (key: keyof Schema) => {
+    const mapper = (key: keyof Children) => {
       const model = this.children[key]
       let a$ = action$.withModel(model)
 
@@ -85,7 +85,7 @@ export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<Stat
     )
   }
 
-  update = (state: this['state'], context: UpdateContext<SchemaLike>): this['state'] => {
+  update = (state: this['state'], context: UpdateContext<Schema>): this['state'] => {
     const nextState = <this['state']>{}
     let changed = false
 
@@ -93,7 +93,7 @@ export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<Stat
       state = <this['state']>{}
     }
 
-    Object.keys(this.children).forEach((key: keyof Schema) => {
+    Object.keys(this.children).forEach((key: keyof Children) => {
       state = <this['state']>state
       const model = this.children[key]
 
@@ -126,10 +126,10 @@ export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<Stat
     return state
   }
 
-  private _linkChildren(children: Schema) {
+  private _linkChildren(children: Children) {
     return Object
       .keys(children)
-      .map(<K extends keyof Schema>(k: K) => {
+      .map(<K extends keyof Children>(k: K) => {
         const childKeyPath = (this.keyPath === '/')
           ? `/${k}`
           : `${this.keyPath}/${k}`
@@ -137,20 +137,20 @@ export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<Stat
       })
   }
 
-  private _unlinkChildren(children: Schema) {
+  private _unlinkChildren(children: Children) {
     Object
       .keys(children)
-      .forEach(<K extends keyof Schema>(k: K) => {
+      .forEach(<K extends keyof Children>(k: K) => {
         children[k].unlink()
       })
   }
 
-  private _getSortedChildren(children: Schema) {
+  private _getSortedChildren(children: Children) {
     const topo = new Toposort()
 
     Object
       .keys(children)
-      .map(key => [key, children[key]] as [keyof Schema, ModelInterface])
+      .map(key => [key, children[key]] as [keyof Children, ModelInterface])
       .forEach(([key, node]) => {
         const hasUnlinkedDependencies = Object.keys(node.dependencies)
           .filter(d => !node.dependencies[d].isLinked)
@@ -168,7 +168,7 @@ export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<Stat
         topo.add(key, deps)
       })
 
-    const sortedChildren: Schema = <Schema>{}
+    const sortedChildren: Children = <Children>{}
     topo.sort().reverse().forEach((key: string) => {
       const node = children[key]
       if (node !== undefined) {
@@ -179,7 +179,7 @@ export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<Stat
     return sortedChildren
   }
 
-  private _combineActionTypeMatchLists(children: Schema) {
+  private _combineActionTypeMatchLists(children: Children) {
     let accept: string[] | undefined = []
     Object.keys(children).forEach(key => {
       const child = children[key]
@@ -194,10 +194,10 @@ export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<Stat
     return accept as string[] | undefined
   }
 
-  private _createExternalDependencies(children: Schema) {
-    type Row = [keyof Schema, ModelInterface]
+  private _createExternalDependencies(children: Children) {
+    type Row = [keyof Children, ModelInterface]
 
-    const dependencyReducer = (a: SchemaLike, [key, node]: Row) => {
+    const dependencyReducer = (a: Schema, [key, node]: Row) => {
       const ds = node.dependencies
       Object.keys(ds).forEach(k => {
         const d = ds[k]
@@ -215,6 +215,6 @@ export class CombinedModel<Schema extends SchemaLike> extends AbstractModel<Stat
   }
 }
 
-export function combineModels<Schema extends SchemaLike>(schema: Schema) {
-  return new CombinedModel(schema)
+export function combineModels<Children extends Schema>(children: Children) {
+  return new CombinedModel(children)
 }

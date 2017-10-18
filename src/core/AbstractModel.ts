@@ -1,4 +1,4 @@
-import { Dict, ActionCreatorMap, DispatcherBoundActionCreatorMap, ModelInterface, Reducer, Epic, SchemaLike, ActionLike } from "../interfaces";
+import { Dict, ActionCreatorMap, DispatcherBoundActionCreatorMap, ModelInterface, Reducer, Epic, Schema, ActionLike } from "../interfaces";
 import { UpdateContext } from "./UpdateContext";
 import { Store } from "./Store";
 import { Observable, Subscription, Observer } from "rxjs";
@@ -20,7 +20,7 @@ function createDeferred<T>() {
     return deferred
 }
 
-export abstract class AbstractModel<State, ActionCreators extends ActionCreatorMap = {}, Dependencies extends SchemaLike = {}> implements ModelInterface {
+export abstract class AbstractModel<State, ActionCreators extends ActionCreatorMap = {}, Dependencies extends Schema = {}> implements ModelInterface {
     protected _actionCreators: ActionCreators;
     private _linkedActionCreators: ActionCreators;
     private _actions: DispatcherBoundActionCreatorMap<ActionCreators>;
@@ -148,7 +148,7 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
         return state
     }
 
-    load(dump: any, updateContext: UpdateContext<SchemaLike>): State | void {
+    load(dump: any, updateContext: UpdateContext<Schema>): State | void {
         return dump
     }
 

@@ -1,9 +1,9 @@
 import { AbstractModel } from './AbstractModel'
 import { UpdateContext } from './UpdateContext'
-import { SchemaLike, Reducer, Epic, ActionCreatorMap, ActionLike } from "../interfaces";
+import { Schema, Reducer, Epic, ActionCreatorMap, ActionLike } from "../interfaces";
 import { Observable } from "rxjs";
 
-export class Model<State = void, ActionCreators extends ActionCreatorMap = {}, Dependencies extends SchemaLike = {}> extends AbstractModel<State, ActionCreators, Dependencies> {
+export class Model<State = void, ActionCreators extends ActionCreatorMap = {}, Dependencies extends Schema = {}> extends AbstractModel<State, ActionCreators, Dependencies> {
     update: Reducer<State, Dependencies>;
     process: Epic<this>;
 
@@ -16,7 +16,7 @@ export class Model<State = void, ActionCreators extends ActionCreatorMap = {}, D
         accept?: string[],
         acceptExtra?: string[],
         dump?: (state: State | void) => any,
-        load?: (dump: any, updateContext: UpdateContext<SchemaLike>) => State | void,
+        load?: (dump: any, updateContext: UpdateContext<Schema>) => State | void,
         actionCreators?: ActionCreators,
         persistent?: boolean
     }) {
