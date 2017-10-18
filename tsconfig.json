@@ -1,22 +1,7 @@
 {
-  "compilerOptions": {
-    "outDir": "./build/step-1",
-    "strict": true,
-    "sourceMap": true,
-    "module": "es6",
-    "moduleResolution": "node",
-    "declaration": true,
-    "declarationDir": "./build/typings",
-    "target": "es6",
-    "jsx": "react",
-    "allowSyntheticDefaultImports": true
-  },
+  "extends": "./tsconfig.base.json",
   "include": [
-    "./src/**/*",
-    "./lib.d.ts"
-  ],
-  "exclude": [
-    "./test/**/*",
-    "./examples/**/*"
+    "src/**/*",
+    "lib.d.ts"
   ]
 }
