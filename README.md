@@ -1,14 +1,20 @@
 # Gasoline
 
-Gasoline is a reactive state graph for rich user interfaces. It lets you create predictable state machines that are easy to reason about and simple to create.
+Gasoline is a reactive programming library that makes it very simple to create predictable state machines, i.e. programs that are easy to reason about.
 
-Inspired by [Redux](redux) and [Elm](elm), Gasoline has a similar architecture, with one-way data-flow, immutable state and a deterministic model for updates in the form of reducers, but includes significant improvements:
+It's specifically designed to support highly interactive user interfaces with complex workflows and many user controls.
+
+Inspired by [Redux](redux) and [Elm](elm), Gasoline is built on the same basic concept, with one-way data-flow, immutable state and a deterministic model for updates in the form of reducers.
+
+It has the following built-in features:
 
 * Declarative API with support for dependencies between models - the primary motivation for this project.
 
-* Side effect streams - a way to abstract time-variant sequences, remote resource access and other side effects, heavily inspired by [redux-observable](redux-observable).
+* Observable action streams to abstract time-variant sequences, remote resource access and other side effects, heavily inspired by [redux-observable](redux-observable).
 
-If you're building web apps with complex UIs, give it a try! Gasoline's high-level API and the ability to define dependencies on state objects helps avoid duplicated code and convoluted control structures. It can even make the implementation read like a straight-forward definition of your application's business rules.
+* Selective dispatch based on action whitelisting - the ability to execute only the code paths where an action can be handled. Essential for performance in large nested state trees with many nodes.
+
+If you're building web apps with complex UIs, give it a try! Gasoline's high-level API and the ability to define dependencies between nodes helps avoid convoluted control structures and code duplication. It can even make the implementation read like a straight-forward definition of your application's business rules.
 
 #### Table of contents
 
