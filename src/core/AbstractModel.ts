@@ -20,6 +20,20 @@ function createDeferred<T>() {
     return deferred
 }
 
+export interface ModelOptions<State, ActionCreators extends ActionCreatorMap = {}, Dependencies extends Schema = {}> {
+    dependencies?: Dependencies,
+    update?: Reducer<State, Dependencies>,
+    process?: Epic<AbstractModel<State, ActionCreators, Dependencies>>,
+    initialState?: State,
+    actionHandlers?: { [key: string]: Reducer<State, Dependencies> },
+    accept?: string[],
+    acceptExtra?: string[],
+    dump?: (state: State | void) => any,
+    load?: (dump: any, updateContext: UpdateContext<Schema>) => State | void,
+    actionCreators?: ActionCreators,
+    persistent?: boolean
+}
+
 export abstract class AbstractModel<State, ActionCreators extends ActionCreatorMap = {}, Dependencies extends Schema = {}> implements ModelInterface {
     protected _actionCreators: ActionCreators;
     private _linkedActionCreators: ActionCreators;
@@ -38,6 +52,68 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
     public accept?: string[]
     public keyPath: string
     public store: Store
+
+    static initializeOptions<M extends AbstractModel<any>>(model: M, options: ModelOptions<M["state"], M["actionCreators"], M["dependencies"]>) {
+        const {
+            dependencies,
+            accept,
+            acceptExtra,
+            actionCreators,
+            initialState,
+            update = ((s: M["state"]) => s),
+            process = (() => Observable.empty()),
+            actionHandlers = {},
+            dump,
+            load,
+            persistent = true
+        } = options
+
+        const stateLess = !options.update && !options.actionHandlers
+
+        if (dependencies) {
+            model.dependencies = dependencies
+        }
+
+        if (accept) {
+            model.accept = accept
+        } else {
+            if (options.actionHandlers) {
+                const acceptHandlers = Object.keys(actionHandlers)
+                if (!options.process && !options.update) {
+                    model.accept = acceptHandlers
+                } else if (acceptExtra) {
+                    model.accept = acceptHandlers.concat(acceptExtra)
+                }
+            }
+        }
+
+        if (actionCreators) {
+            model._actionCreators = actionCreators
+        }
+
+        model.update = (state: M["state"] = initialState, updateContext) => {
+            const { genericActionType } = updateContext
+            if (genericActionType in actionHandlers) {
+                state = actionHandlers[genericActionType](state, updateContext)
+            }
+            return update(state, updateContext)
+        }
+
+        model.process = process
+
+        if (dump) {
+            model.dump = dump
+        }
+
+        if (load) {
+            model.load = load
+        }
+
+        if (stateLess || !persistent) {
+            model.dump = () => undefined
+            model.load = () => undefined
+        }
+    }
 
     public constructor() {
         if (this.constructor === AbstractModel) {
@@ -120,7 +196,7 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
         this._allSubscriptions.unsubscribe();
     }
 
-    whenLinked(callback: () => void) {
+    private _callNowOrWhenDoneLinked(callback: () => void) {
         if (this.isLinked) {
             callback();
             return
@@ -167,7 +243,7 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
         let cancel: () => void;
         let cancelled = false;
 
-        this.whenLinked(() => {
+        this._callNowOrWhenDoneLinked(() => {
             if (!cancelled) {
                 _listener()
                 cancel = this.store.listen(`update ${this.keyPath}`, _listener)
