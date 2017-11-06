@@ -2,7 +2,7 @@
   "name": "gasoline",
   "private": true,
   "version": "0.1.0",
-  "description": "Reactive state graph for rich user interfaces",
+  "description": "State management library for lazy programmers",
   "scripts": {
     "test": "jest --verbose",
     "b:_clean": "rm -rf ./build ./dist",
