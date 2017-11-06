@@ -25,9 +25,9 @@ You can think of Gasoline as object-based Redux; where the basic building blocks
 
 ### Models
 
-A model is a description of some part of the application's state, with instructions on how that state will change. In other words - a localized state machine.
+A model is a description of some part of the application's state, with instructions on how that state will change.
 
->Note that models don't hold the actual state on their own. They hold references to their state from the store.
+>Note that models don't hold the actual state in them, but keep a reference to the store.
 
 There are two ways models can respond to actions:
 
