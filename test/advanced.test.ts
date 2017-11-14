@@ -8,7 +8,7 @@ type ActionCreators = {
     setValue(payload: string): gasoline.ActionLike
 }
 
-class TextModel<Dependencies extends gasoline.SchemaLike = {}> extends gasoline.AbstractModel<string, ActionCreators, Dependencies> {
+class TextModel<Dependencies extends gasoline.Schema = {}> extends gasoline.AbstractModel<string, ActionCreators, Dependencies> {
     proxySetValue?: ProxySetValue
     getValue?: GetValue<Dependencies, string>
     update: gasoline.Reducer<string, Dependencies>;

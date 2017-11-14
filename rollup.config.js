@@ -4,7 +4,7 @@ import nodeResolve from 'rollup-plugin-node-resolve'
 import commonJs from 'rollup-plugin-commonjs'
 import builtins from 'rollup-plugin-node-builtins'
 
-const dependencies = require('./package.json').dependencies
+const peerDependencies = require('./package.json').peerDependencies
 
 const plugins = [
   builtins(),
@@ -24,7 +24,7 @@ const plugins = [
 const configuration = {
   input: 'build/step-1/index.js',
   plugins,
-  external: Object.keys(dependencies),
+  external: Object.keys(peerDependencies),
   globals: { rxjs: 'Rx', react: "React" },
   output: [
     {

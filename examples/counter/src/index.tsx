@@ -1,19 +1,9 @@
-# Usage
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+import * as Rx from "rxjs";
+import * as gasoline from "gasoline";
+import './index.css';
 
-#### Table of contents
-
-1. [Basic usage](#basic-usage)
-    1. [Simple model](#creating-a-simple-model)
-    1. [Model with side effects](#creating-a-model-with-side-effects)
-    1. [Combining models](#combining-models)
-    1. [Creating a store](#creating-a-store)
-    1. [Rendering with React](#rendering-with-react)
-
-## Basic usage
-
-### Creating a simple model
-
-```ts
 const counter = new gasoline.Model({
 
     initialState: 0,
@@ -29,11 +19,7 @@ const counter = new gasoline.Model({
     }
 
 });
-```
 
-### Creating a model with side effects
-
-```ts
 const autoIncrement = new gasoline.Model({
 
     initialState: false,
@@ -50,48 +36,25 @@ const autoIncrement = new gasoline.Model({
 
     process(action$, model) {
         return action$
-
-            // Every time a "TOGGLE_AUTO_INCREMENT" action is dispatched,
-            // and also when the store starts,
             .ofType("TOGGLE_AUTO_INCREMENT", gasoline.Store.START)
-            .map(() => {
-
-                // check if auto increment is enabled: if it is,
-                // return a stream that emits "INCREMENT" actions every second,
+            .switchMap(() => {
                 if (model.state) {
                     const action = counter.actionCreators.increment()
                     return Rx.Observable.interval(1000).mapTo(action)
                 }
-
-                // otherwise return an empty stream.
                 return Rx.Observable.empty()
             })
-
-            // Emit only from the latest inner stream.
-            .switch()
     }
 
 });
-```
 
-### Combining models
-
-```ts
 const rootModel = gasoline.combineModels({
     counter,
     autoIncrement
-})
-```
+});
 
-### Creating a store
+const store = new gasoline.Store(rootModel);
 
-```ts
-const store = new gasoline.Store(rootModel)
-```
-
-### Rendering with React
-
-```tsx
 const createContainer = gasoline.connect(
     rootModel.state$,
     {
@@ -100,14 +63,7 @@ const createContainer = gasoline.connect(
     }
 )
 
-type Props = {
-    counter: number,
-    autoIncrement: boolean,
-    increment: () => void,
-    toggleAutoIncrement: () => void,
-}
-
-const CounterApp = createContainer((props: Props) => {
+const CounterApp = createContainer(props => {
     const incrementBtn = (
         <button disabled={props.autoIncrement}
                 onClick={props.increment}>
@@ -129,12 +85,17 @@ const CounterApp = createContainer((props: Props) => {
     )
 })
 
+store.load({ autoIncrement: true, counter: 1000 });
+
 store.ready(() => {
     ReactDOM.render(
         <CounterApp />,
         document.querySelector("#app")
     )
+
+    store.action$.withLatestFrom(store.model.state$).subscribe(([action, state]) => {
+        console.log(action, state)
+    })
 })
 
 store.start()
-```

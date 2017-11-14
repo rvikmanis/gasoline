@@ -1,11 +1,12 @@
-import { AbstractModel } from "./AbstractModel";
-import { ActionLike, Dict, ModelInterface, Schema, StateOf, ActionMeta, Listener, DispatchedActionMeta } from "../interfaces";
-import { UpdateContext } from "./UpdateContext";
+import { Observable, Subscription, Subject, BehaviorSubject } from 'rxjs';
 import { ISubscription } from 'rxjs/Subscription';
-import { Scheduler, Observable, Subject } from "rxjs"
-import { ActionsObservable } from "./ActionsObservable";
-import { clone } from "../helpers/clone";
-import uuid from '../vendor/uuid'
+
+import { clone } from '../helpers/clone';
+import { ActionLike, Dict, DispatchedActionMeta, Listener } from '../interfaces';
+import uuid from '../vendor/uuid';
+import { AbstractModel } from './AbstractModel';
+import { ActionsObservable } from './ActionsObservable';
+import { UpdateContext } from './UpdateContext';
 
 export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
     static START = 'gasoline.Store.START'
@@ -13,24 +14,22 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
     static LOAD = 'gasoline.Store.LOAD'
 
     private _lastUpdateContext?: UpdateContext<any>;
-    private _subscription?: ISubscription;
+    private _subscription?: Subscription;
     private _listeners: Dict<Listener[]>;
     private _input$: Subject<ActionLike>;
-    private _actionStream$: Subject<Observable<ActionLike>>;
 
     public isStarted: boolean;
     public digest: Dict<any>;
-    public action$: Observable<ActionLike>;
+    public action$: BehaviorSubject<ActionLike | undefined>;
     public model: M;
 
     constructor(model: M) {
         this._listeners = {}
         this._input$ = new Subject<ActionLike>()
-        this._actionStream$ = new Subject<Observable<ActionLike>>()
 
         this.isStarted = false
         this.digest = {}
-        this.action$ = this._actionStream$.switch()
+        this.action$ = new BehaviorSubject<ActionLike | undefined>(undefined)
         this.model = model
 
         const onLinked = model.link('/', this)
@@ -47,11 +46,17 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         if (this.model.accept) {
             action$ = action$.ofType(Store.START, Store.STOP, ...this.model.accept)
         }
+        action$ = action$.share() as ActionsObservable
 
-        this._actionStream$.next(action$)
+        const sub = action$.subscribe(action => {
+            this.action$.next(action)
+        })
+
         this._subscription = Observable
             .from(this.model.process(action$, this.model))
             .subscribe(action => { this.dispatch(action) })
+
+        this._subscription.add(sub)
         this._dispatch({ type: Store.START })
         this._invokeListeners("started")
     }

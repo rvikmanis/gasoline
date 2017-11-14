@@ -1,11 +1,19 @@
-import { Dict, ActionCreatorMap, DispatcherBoundActionCreatorMap, ModelInterface, Reducer, Epic, Schema, ActionLike } from "../interfaces";
-import { UpdateContext } from "./UpdateContext";
-import { Store } from "./Store";
-import { Observable, Subscription, Observer } from "rxjs";
-import { mapValues } from "../helpers/mapValues";
-import { clone } from "../helpers/clone";
-import { matchActionType } from '../helpers/matchActionType'
-import { ActionType } from "../helpers/ActionType";
+import { Observable, Observer, Subscription } from 'rxjs';
+
+import { ActionType } from '../helpers/ActionType';
+import { mapValues } from '../helpers/mapValues';
+import { matchActionType } from '../helpers/matchActionType';
+import {
+    ActionCreatorMap,
+    Dict,
+    DispatcherBoundActionCreatorMap,
+    Epic,
+    ModelInterface,
+    Reducer,
+    Schema,
+} from '../interfaces';
+import { Store } from './Store';
+import { UpdateContext } from './UpdateContext';
 
 type Deferred<T> = {
     promise: Promise<T>,
@@ -23,7 +31,7 @@ function createDeferred<T>() {
 export interface ModelOptions<State, ActionCreators extends ActionCreatorMap = {}, Dependencies extends Schema = {}> {
     dependencies?: Dependencies,
     update?: Reducer<State, Dependencies>,
-    process?: Epic<AbstractModel<State, ActionCreators, Dependencies>>,
+    process?: Epic<ModelInterface>,
     initialState?: State,
     actionHandlers?: { [key: string]: Reducer<State, Dependencies> },
     accept?: string[],
@@ -43,7 +51,7 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
     private _actionTypeMatchCache: Dict<boolean>
 
     public abstract update: Reducer<State, Dependencies>;
-    public abstract process: Epic<this>;
+    public abstract process: Epic<AbstractModel<State, ActionCreators, Dependencies>>;
     public dependencies: Dependencies;
     public isLinked: boolean
     public isDisposed: boolean
@@ -53,14 +61,14 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
     public keyPath: string
     public store: Store
 
-    static initializeOptions<M extends AbstractModel<any>>(model: M, options: ModelOptions<M["state"], M["actionCreators"], M["dependencies"]>) {
+    static initializeOptions<S, A extends ActionCreatorMap = {}, D extends Schema = {}>(model: AbstractModel<S, A, D>, options: ModelOptions<S, A, D>) {
         const {
             dependencies,
             accept,
             acceptExtra,
             actionCreators,
             initialState,
-            update = ((s: M["state"]) => s),
+            update = ((s: S) => s),
             process = (() => Observable.empty()),
             actionHandlers = {},
             dump,
@@ -91,7 +99,7 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
             model._actionCreators = actionCreators
         }
 
-        model.update = (state: M["state"] = initialState, updateContext) => {
+        model.update = (state: S = initialState as S, updateContext) => {
             const { genericActionType } = updateContext
             if (genericActionType in actionHandlers) {
                 state = actionHandlers[genericActionType](state, updateContext)
