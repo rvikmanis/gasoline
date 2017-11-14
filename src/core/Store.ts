@@ -1,4 +1,4 @@
-import { Observable, Subscription, Subject, BehaviorSubject } from 'rxjs';
+import { Observable, Subscription, Subject, BehaviorSubject, Observer } from 'rxjs';
 import { ISubscription } from 'rxjs/Subscription';
 
 import { clone } from '../helpers/clone';
@@ -17,19 +17,25 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
     private _subscription?: Subscription;
     private _listeners: Dict<Listener[]>;
     private _input$: Subject<ActionLike>;
+    private _action$: BehaviorSubject<ActionLike | undefined>;
 
     public isStarted: boolean;
     public digest: Dict<any>;
-    public action$: BehaviorSubject<ActionLike | undefined>;
+    public action$: Observable<ActionLike>;
     public model: M;
 
     constructor(model: M) {
         this._listeners = {}
         this._input$ = new Subject<ActionLike>()
+        this._action$ = new BehaviorSubject<ActionLike | undefined>(undefined)
 
         this.isStarted = false
         this.digest = {}
-        this.action$ = new BehaviorSubject<ActionLike | undefined>(undefined)
+        this.action$ = Observable.create((observer: Observer<ActionLike>) => {
+            return this._action$
+                .filter(action => action !== undefined)
+                .subscribe(observer)
+        })
         this.model = model
 
         const onLinked = model.link('/', this)
@@ -48,15 +54,15 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         }
         action$ = action$.share() as ActionsObservable
 
-        const sub = action$.subscribe(action => {
-            this.action$.next(action)
+        this._subscription = action$.subscribe(action => {
+            this._action$.next(action)
         })
 
-        this._subscription = Observable
-            .from(this.model.process(action$, this.model))
-            .subscribe(action => { this.dispatch(action) })
-
-        this._subscription.add(sub)
+        this._subscription.add(
+            Observable
+                .from(this.model.process(action$, this.model))
+                .subscribe(action => { this.dispatch(action) })
+        )
         this._dispatch({ type: Store.START })
         this._invokeListeners("started")
     }

@@ -85,8 +85,6 @@ const CounterApp = createContainer(props => {
   )
 })
 
-store.load({ autoIncrement: true, counter: 1000 });
-
 store.ready(() => {
   ReactDOM.render(
     <CounterApp />,

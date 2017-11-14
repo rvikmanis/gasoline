@@ -101,6 +101,7 @@ test("Generic models", () => {
     }).toPromise()
 
     store.start()
+
     expect(store.model.state).toEqual({
         firstName: "",
         lastName: ""
