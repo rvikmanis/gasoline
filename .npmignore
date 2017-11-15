@@ -1,8 +1,7 @@
-./examples
-./build
-./src
-./test
-
+examples
+build
+src
+test
 .vscode
 .babelrc
 .gitignore
@@ -10,5 +9,4 @@ yarn.lock
 rollup.config.js
 tsconfig.base.json
 tsconfig.json
-
-./lib.d.ts
+lib.d.ts

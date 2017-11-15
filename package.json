@@ -12,6 +12,9 @@
     "build": "yarn b:_clean && yarn b:_build && yarn b:_minify && yarn b:_dist && yarn b:_remove_build_dir",
     "prepublishOnly": "yarn test && yarn build"
   },
+  "files": [
+    "./dist/"
+  ],
   "main": "dist/gasoline.js",
   "types": "dist/typings/index.d.ts",
   "jsnext:main": "dist/gasoline.mjs",
