@@ -12,7 +12,7 @@ Gasoline is a state management library with a focus on expressiveness, predictab
 
 ## Overview
 
-Inspired by [Redux](redux) and [Elm](elm), it works on the same basic principles: global updates, immutable state and unidirectional flow of changes.
+Inspired by Redux and Elm, it works on the same principles: global updates, immutable state and unidirectional flow of changes.
 
 Gasoline helps you write business rules in a way that is easy to reason about, and gives you powerful tools for cutting complexity and development time:
 
@@ -25,7 +25,7 @@ You can think of Gasoline as object-based Redux; where the basic building blocks
 
 ### Models
 
-A model is a description of some part of the application's state, with instructions on how that state will change.
+In Gasoline, a model is a description of some part of the application's state, with instructions on how that state will change.
 
 >Note that models don't hold the actual state in them, but keep a reference to the store.
 
@@ -50,16 +50,14 @@ Same as in Redux, there should be a single store per application.
 
 ## Installation
 
-We haven't yet released, but once we do, Gasoline will be available on *npm*.
-
 #### Node.js
 
-We recommend installing with [Yarn](https://yarnpkg.com/), because it's faster.
 ```
 yarn add gasoline
 ```
 
-But *npm* works too.
+or
+
 ```
 npm install --save gasoline
 ```
