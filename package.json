@@ -1,6 +1,6 @@
 {
   "name": "gasoline",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "State management library for lazy programmers",
   "scripts": {
     "test": "jest --verbose",
