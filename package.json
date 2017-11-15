@@ -1,6 +1,5 @@
 {
   "name": "gasoline",
-  "private": true,
   "version": "0.1.0",
   "description": "State management library for lazy programmers",
   "scripts": {
@@ -10,7 +9,8 @@
     "b:_minify": "babili --source-maps=true -o build/step-2/gasoline.min.js build/step-2/gasoline.js",
     "b:_dist": "cp -R ./build/step-2 ./dist && cp -R ./build/typings ./dist/typings",
     "b:_remove_build_dir": "rm -rf ./build",
-    "build": "yarn b:_clean && yarn b:_build && yarn b:_minify && yarn b:_dist && yarn b:_remove_build_dir"
+    "build": "yarn b:_clean && yarn b:_build && yarn b:_minify && yarn b:_dist && yarn b:_remove_build_dir",
+    "prepublishOnly": "yarn test && yarn build"
   },
   "main": "dist/gasoline.js",
   "types": "dist/typings/index.d.ts",
