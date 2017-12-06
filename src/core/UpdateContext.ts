@@ -2,6 +2,7 @@ import { relative } from 'path';
 import { ModelInterface, ActionLike, Dict, StateOf, Schema } from "../interfaces";
 import { Store } from "./Store";
 import { mapValues } from "../helpers/mapValues";
+import { matchActionTarget } from "../helpers/matchActionTarget";
 
 export type WorkingState = {
   digest: Dict<any>;
@@ -45,10 +46,7 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
   public compute() {
     this._dependencies = undefined
 
-    const actionTargetMatches = (
-      this.action.target === undefined
-      || !relative(this.model.keyPath, this.action.target).startsWith('../')
-    )
+    const actionTargetMatches = matchActionTarget(this.model.keyPath, this.action.target)
 
     // Match store lifecycle and model actions
     const actionDoesMatch: boolean = actionTargetMatches && (

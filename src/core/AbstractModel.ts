@@ -1,3 +1,4 @@
+import { createActionTarget } from '../helpers/createActionTarget';
 import { dirname, resolve } from 'path';
 import { Observable, Observer, Subscription } from 'rxjs';
 
@@ -164,16 +165,7 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
             this._linkedActionCreators = mapValues(this._actionCreators, (actionCreator) => {
                 return (...args: any[]) => {
                     const action = clone(actionCreator(...args))
-                    if (action.target === undefined) {
-                        return action
-                    }
-
-                    if (action.target === "@self") {
-                        action.target = this.keyPath
-                    }
-
-                    action.target = resolve(dirname(this.keyPath), action.target)
-
+                    action.target = createActionTarget(this.keyPath, action.target)
                     return action
                 }
             })

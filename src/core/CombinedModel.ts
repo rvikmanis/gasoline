@@ -1,3 +1,4 @@
+import { matchActionTarget } from '../helpers/matchActionTarget';
 import { Dict, ActionLike, ModelInterface, StateOf, Schema } from "../interfaces";
 import { relative } from 'path'
 import { UpdateContext } from "./UpdateContext";
@@ -71,11 +72,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     const mapper = (key: keyof Children) => {
       const model = this.children[key]
       let a$ = action$.filter(action => {
-        if (action.target !== undefined) {
-          return !relative(model.keyPath, action.target).startsWith('../')
-        }
-
-        return true
+          return matchActionTarget(model.keyPath, action.target)
       }) as ActionsObservable
 
       if (model.accept) {

@@ -31,7 +31,7 @@ export interface DispatchedActionMeta {
 
 export interface ActionLike {
   type: string;
-  target?: string | undefined;
+  target?: string | string[];
   meta?: ActionMeta;
   payload?: any;
 }
