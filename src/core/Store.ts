@@ -48,7 +48,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         }
         this.isStarted = true
 
-        let action$ = ActionsObservable.from(this._input$).withModel(this.model)
+        let action$ = ActionsObservable.from(this._input$)
         if (this.model.accept) {
             action$ = action$.ofType(Store.START, Store.STOP, ...this.model.accept)
         }

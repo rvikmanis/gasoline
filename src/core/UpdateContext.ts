@@ -1,7 +1,7 @@
+import { relative } from 'path';
 import { ModelInterface, ActionLike, Dict, StateOf, Schema } from "../interfaces";
 import { Store } from "./Store";
 import { mapValues } from "../helpers/mapValues";
-import { ActionType } from "../helpers/ActionType";
 
 export type WorkingState = {
   digest: Dict<any>;
@@ -20,7 +20,6 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
   public shouldUpdate: boolean;
   public actionDoesMatch: boolean;
   public dependenciesHaveChanged: boolean;
-  public genericActionType: string;
 
   private _dependencies: any;
   public get dependencies(): StateOf<Dependencies> {
@@ -36,10 +35,6 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
 
   constructor(action: A, initialModel: ModelInterface, initialWorkingState?: WorkingState) {
     this.action = action
-    const descriptor = ActionType.parse(action.type)
-    if (descriptor.isGeneric && !descriptor.isBound) {
-      throw new Error(`Cannot create update context with unbound generic action type: ${descriptor.actionType}`)
-    }
     if (initialWorkingState === undefined) {
       initialWorkingState = createEmptyWorkingState()
     }
@@ -49,12 +44,16 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
 
   public compute() {
     this._dependencies = undefined
-    this.genericActionType = ActionType.getGenericOrLiteralForModel(this.action.type, this.model)
+
+    const actionTargetMatches = (
+      this.action.target === undefined
+      || !relative(this.model.keyPath, this.action.target).startsWith('../')
+    )
 
     // Match store lifecycle and model actions
-    const actionDoesMatch: boolean = (
-      [Store.START, Store.STOP, Store.LOAD].indexOf(this.genericActionType) > -1
-      || this.model.matchActionType(this.genericActionType)
+    const actionDoesMatch: boolean = actionTargetMatches && (
+      [Store.START, Store.STOP, Store.LOAD].indexOf(this.action.type) > -1
+      || this.model.matchActionType(this.action.type)
     )
 
     let dependenciesHaveChanged: boolean = false

@@ -41,19 +41,19 @@ class TextModel<Dependencies extends gasoline.Schema = {}> extends gasoline.Abst
 
         this._actionCreators = {
             setValue: (payload: string) => {
-                return { type: "SET_VALUE:*", payload }
+                return { type: "SET_VALUE", target: "@self", payload }
             }
         }
 
-        this.accept = ["SET_VALUE:*"]
+        this.accept = ["SET_VALUE"]
 
         this.update = (state: string = initialValue, updateContext) => {
             if (this.getValue) {
                 return this.getValue(updateContext.dependencies)
             }
 
-            switch (updateContext.genericActionType) {
-                case "SET_VALUE:*":
+            switch (updateContext.action.type) {
+                case "SET_VALUE":
                     return updateContext.action.payload
                 default:
                     return state
@@ -62,7 +62,7 @@ class TextModel<Dependencies extends gasoline.Schema = {}> extends gasoline.Abst
 
         this.process = (action$, model) => {
             if (this.proxySetValue) {
-                return action$.ofType("SET_VALUE:*").switchMap(action => {
+                return action$.ofType("SET_VALUE").switchMap(action => {
                     const out = this.proxySetValue(action)
                     if (out === undefined) {
                         return Observable.empty()
@@ -95,8 +95,8 @@ test("Generic models", () => {
     }).bufferCount(3).take(1).do(actions => {
         expect(actions).toEqual([
             {type: gasoline.Store.START, ts: 0},
-            {type: "SET_VALUE:/firstName", payload: "Foo", ts: 0},
-            {type: "SET_VALUE:/lastName", payload: "Bar", ts: 0}
+            {type: "SET_VALUE", target: "/firstName", payload: "Foo", ts: 0},
+            {type: "SET_VALUE", target: "/lastName", payload: "Bar", ts: 0}
         ])
     }).toPromise()
 
@@ -150,16 +150,16 @@ test("Side effect scheduling", () => {
     }).buffer(Observable.timer(2000)).take(1).do(buf => {
         expect(buf).toEqual([
             { ts:0, type: gasoline.Store.START },
-            { ts:0, type: "SET_VALUE:/derivedText", payload: "HELLO World" },
-            { ts:0, type: "SET_VALUE:/sourceText", payload: "hello world" },
-            { ts: 250, type: "SET_VALUE:/sourceText", payload: "hello world,0" },
-            {ts: 500, "payload": "hello world,1", "type": "SET_VALUE:/sourceText"},
-            {ts: 750,"payload": "HELLO WORLD,1 haZARD,2", "type": "SET_VALUE:/derivedText"},
-            {ts:750,"payload": "hello world,1 hazard,2", "type": "SET_VALUE:/sourceText"},
-            {ts: 1000,"payload": "hello world,3", "type": "SET_VALUE:/sourceText"},
-            {ts: 1250,"payload": "hello world,4", "type": "SET_VALUE:/sourceText"},
-            {ts: 1500,"payload": "hello world,5", "type": "SET_VALUE:/sourceText"},
-            {ts: 1750,"payload": "hello world,6", "type": "SET_VALUE:/sourceText"}
+            { ts:0, type: "SET_VALUE", target: "/derivedText", payload: "HELLO World" },
+            { ts:0, type: "SET_VALUE", target: "/sourceText", payload: "hello world" },
+            { ts: 250, type: "SET_VALUE", target: "/sourceText", payload: "hello world,0" },
+            {ts: 500, "payload": "hello world,1", "type": "SET_VALUE",  target: "/sourceText",},
+            {ts: 750,"payload": "HELLO WORLD,1 haZARD,2", "type": "SET_VALUE", target: "/derivedText",},
+            {ts:750,"payload": "hello world,1 hazard,2", "type": "SET_VALUE",  target: "/sourceText",},
+            {ts: 1000,"payload": "hello world,3", "type": "SET_VALUE", target: "/sourceText",},
+            {ts: 1250,"payload": "hello world,4", "type": "SET_VALUE", target: "/sourceText",},
+            {ts: 1500,"payload": "hello world,5", "type": "SET_VALUE", target: "/sourceText",},
+            {ts: 1750,"payload": "hello world,6", "type": "SET_VALUE", target: "/sourceText",}
         ])
 
         expect(derivedTextStates).toEqual([

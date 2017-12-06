@@ -1,10 +1,11 @@
+import { dirname, resolve } from 'path';
 import { Observable, Observer, Subscription } from 'rxjs';
 
-import { ActionType } from '../helpers/ActionType';
 import { mapValues } from '../helpers/mapValues';
 import { matchActionType } from '../helpers/matchActionType';
 import {
     ActionCreatorMap,
+    ActionLike,
     Dict,
     DispatcherBoundActionCreatorMap,
     Epic,
@@ -14,6 +15,7 @@ import {
 } from '../interfaces';
 import { Store } from './Store';
 import { UpdateContext } from './UpdateContext';
+import { clone } from "../helpers/clone";
 
 type Deferred<T> = {
     promise: Promise<T>,
@@ -100,14 +102,13 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
         }
 
         model.update = (state: S = initialState as S, updateContext) => {
-            const { genericActionType } = updateContext
-            if (genericActionType in actionHandlers) {
-                state = actionHandlers[genericActionType](state, updateContext)
+            if (updateContext.action.type in actionHandlers) {
+                state = actionHandlers[updateContext.action.type](state, updateContext)
             }
             return update(state, updateContext)
         }
 
-        model.process = process
+        model.process = process as any
 
         if (dump) {
             model.dump = dump
@@ -161,7 +162,20 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
     public get actionCreators() {
         if (!this._linkedActionCreators) {
             this._linkedActionCreators = mapValues(this._actionCreators, (actionCreator) => {
-                return ActionType.bindActionCreatorToModel(actionCreator, this)
+                return (...args: any[]) => {
+                    const action = clone(actionCreator(...args))
+                    if (action.target === undefined) {
+                        return action
+                    }
+
+                    if (action.target === "@self") {
+                        action.target = this.keyPath
+                    }
+
+                    action.target = resolve(dirname(this.keyPath), action.target)
+
+                    return action
+                }
             })
         }
         return this._linkedActionCreators

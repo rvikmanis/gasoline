@@ -70,10 +70,16 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
   process = (action$: ActionsObservable) => {
     const mapper = (key: keyof Children) => {
       const model = this.children[key]
-      let a$ = action$.withModel(model)
+      let a$ = action$.filter(action => {
+        if (action.target !== undefined) {
+          return !relative(model.keyPath, action.target).startsWith('../')
+        }
+
+        return true
+      }) as ActionsObservable
 
       if (model.accept) {
-        a$ = action$.withModel(model).ofType(Store.START, Store.STOP, ...model.accept)
+        a$ = a$.ofType(Store.START, Store.STOP, ...model.accept)
       }
 
       return model.process(a$, model)

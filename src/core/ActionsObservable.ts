@@ -3,7 +3,6 @@ import { Operator } from "rxjs/Operator";
 import { ObservableInput } from 'rxjs/Observable'
 import { IScheduler } from "rxjs/Scheduler";
 import { Observable } from 'rxjs'
-import { ActionType } from "../helpers/ActionType"
 import { matchActionType } from "../helpers/matchActionType";
 
 export class ActionsObservable<T = ActionLike> extends Observable<T> {
@@ -17,38 +16,25 @@ export class ActionsObservable<T = ActionLike> extends Observable<T> {
     return new this<T>(Observable.from(input, scheduler))
   }
 
-  constructor(source?: Observable<any>, model?: ModelInterface) {
+  constructor(source?: Observable<any>) {
     super()
 
     if (source) {
       this.source = source
     }
-
-    if (model) {
-      this.model = model
-    }
   }
 
   lift<R>(operator: Operator<T, R>): ActionsObservable<R> {
-    const obs = new ActionsObservable<R>(this, this.model)
+    const obs = new ActionsObservable<R>(this)
     obs.operator = operator
     return obs
-  }
-
-  withModel(model: ModelInterface): ActionsObservable<T> {
-    return new ActionsObservable(this, model)
   }
 
   private _matchType(actionTypes: string[], matchValue: boolean) {
     const cache = {};
 
-    if (!this.model) {
-      throw new Error(`action$.model is undefined`);
-    }
-
     return this.filter((action: T & ActionLike) => {
-      const genericActionType = ActionType.getGenericOrLiteralForModel(action.type, this.model)
-      return matchValue === matchActionType(actionTypes, genericActionType, cache)
+      return matchValue === matchActionType(actionTypes, action.type, cache)
     }) as ActionsObservable<T>
   }
 
