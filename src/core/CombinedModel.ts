@@ -15,7 +15,6 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     super()
     this.children = children
     this.accept = this._combineActionTypeMatchLists(children)
-    this.hasChildren = true
   }
 
   link(keyPath: string, store: Store<any>) {

@@ -24,11 +24,11 @@ let store
 
 function setup() {
   const txt = new Model({
-    initialState: 'Foo+',
-    actionHandlers: {
-      [SET_TEXT](_, { action: { payload } }) {
-        return payload
+    update(state: string = 'Foo+', context) {
+      if (context.action.type === SET_TEXT) {
+        state = context.action.payload
       }
+      return state
     }
   })
 

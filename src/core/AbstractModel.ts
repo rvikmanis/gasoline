@@ -31,20 +31,6 @@ function createDeferred<T>() {
     return deferred
 }
 
-export interface ModelOptions<State, ActionCreators extends ActionCreatorMap = {}, Dependencies extends Schema = {}> {
-    dependencies?: Dependencies,
-    update?: Reducer<State, Dependencies>,
-    process?: Epic<ModelInterface>,
-    initialState?: State,
-    actionHandlers?: { [key: string]: Reducer<State, Dependencies> },
-    accept?: string[],
-    acceptExtra?: string[],
-    dump?: (state: State | void) => any,
-    load?: (dump: any, updateContext: UpdateContext<Schema>) => State | void,
-    actionCreators?: ActionCreators,
-    persistent?: boolean
-}
-
 export abstract class AbstractModel<State, ActionCreators extends ActionCreatorMap = {}, Dependencies extends Schema = {}> implements ModelInterface {
     protected _actionCreators: ActionCreators;
     private _linkedActionCreators: ActionCreators;
@@ -58,72 +44,10 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
     public dependencies: Dependencies;
     public isLinked: boolean
     public isDisposed: boolean
-    public hasChildren: boolean
     public state$: Observable<State>
     public accept?: string[]
     public keyPath: string
     public store: Store
-
-    static initializeOptions<S, A extends ActionCreatorMap = {}, D extends Schema = {}>(model: AbstractModel<S, A, D>, options: ModelOptions<S, A, D>) {
-        const {
-            dependencies,
-            accept,
-            acceptExtra,
-            actionCreators,
-            initialState,
-            update = ((s: S) => s),
-            process = (() => Observable.empty()),
-            actionHandlers = {},
-            dump,
-            load,
-            persistent = true
-        } = options
-
-        const stateLess = !options.update && !options.actionHandlers
-
-        if (dependencies) {
-            model.dependencies = dependencies
-        }
-
-        if (accept) {
-            model.accept = accept
-        } else {
-            if (options.actionHandlers) {
-                const acceptHandlers = Object.keys(actionHandlers)
-                if (!options.process && !options.update) {
-                    model.accept = acceptHandlers
-                } else if (acceptExtra) {
-                    model.accept = acceptHandlers.concat(acceptExtra)
-                }
-            }
-        }
-
-        if (actionCreators) {
-            model._actionCreators = actionCreators
-        }
-
-        model.update = (state: S = initialState as S, updateContext) => {
-            if (updateContext.action.type in actionHandlers) {
-                state = actionHandlers[updateContext.action.type](state, updateContext)
-            }
-            return update(state, updateContext)
-        }
-
-        model.process = process as any
-
-        if (dump) {
-            model.dump = dump
-        }
-
-        if (load) {
-            model.load = load
-        }
-
-        if (stateLess || !persistent) {
-            model.dump = () => undefined
-            model.load = () => undefined
-        }
-    }
 
     public constructor() {
         if (this.constructor === AbstractModel) {
@@ -138,7 +62,6 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
         this.dependencies = {} as Dependencies
         this.isLinked = false
         this.isDisposed = false
-        this.hasChildren = false
 
         this.state$ = Observable.create((observer: Observer<State>) => {
             if (this.isDisposed) {

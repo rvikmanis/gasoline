@@ -53,7 +53,6 @@ export interface ModelInterface {
   store: Store<any>;
   isLinked: boolean;
   isDisposed: boolean;
-  hasChildren: boolean;
 
   actionCreators: ActionCreatorMap;
   actions: DispatcherBoundActionCreatorMap<any>;
