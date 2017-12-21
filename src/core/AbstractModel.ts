@@ -7,9 +7,7 @@ import { matchActionType } from '../helpers/matchActionType';
 import {
     ActionCreatorMap,
     ActionLike,
-    Epic,
     ModelInterface,
-    Reducer,
     Schema,
 } from '../interfaces';
 import { Store } from './Store';

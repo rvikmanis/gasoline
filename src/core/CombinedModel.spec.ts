@@ -24,7 +24,7 @@ describe('#dump(state)', () => {
   })
 
   test("returns undefined if all children return undefined", () => {
-    delete c.children.d
+    c.children.delete("d")
     expect(c.dump({} as any)).toBe(undefined)
   })
 })

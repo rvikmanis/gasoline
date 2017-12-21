@@ -61,7 +61,7 @@ function setup() {
   })
 
   const nChars = new Model({
-    dependencies: { chars: combinedTxtModel.children.characterList },
+    dependencies: { chars: combinedTxtModel.getChild("characterList") },
     update(state: number, { dependencies }) {
       return dependencies.chars.length
     },
@@ -91,7 +91,7 @@ function setup() {
 
   const mDeps = new Model({
     dependencies: {
-      text: combinedTxtModel.children.text,
+      text: combinedTxtModel.getChild("text"),
       counter: cntr,
       numChars: nChars
     },

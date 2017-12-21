@@ -1,19 +1,22 @@
 import { matchActionTarget } from '../helpers/matchActionTarget';
 import { ActionLike, ModelInterface, StateOf, Schema } from "../interfaces";
-import { relative } from 'path'
+import { relative, join } from 'path'
 import { UpdateContext } from "./UpdateContext";
 import { AbstractModel } from "./AbstractModel";
-import { Observable } from 'rxjs';
+import { Observable, Observer } from 'rxjs';
 import { ActionsObservable } from "./ActionsObservable";
 import { Store } from "./Store";
 import Toposort from 'toposort-class'
+import { Subscribable } from "rxjs/Observable";
 
 export class CombinedModel<Children extends Schema> extends AbstractModel<StateOf<Children>> {
-  public children: Children;
+  public children: Map<keyof Children, Children[keyof Children]>;
+  private _childKeysByModel: Map<Children[keyof Children], keyof Children>
 
   constructor(children: Children) {
     super()
-    this.children = children
+    this.children = new Map(Object.keys(children).map(k => [k, children[k]] as [string, ModelInterface]))
+    this._childKeysByModel = new Map([...this.children].map(entry => [entry[1], entry[0]] as [typeof entry[1], typeof entry[0]]))
     this._accept = this._combineActionTypeMatchLists(children)
   }
 
@@ -32,18 +35,22 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
 
   unlink() {
     super.unlink()
-    this._unlinkChildren(this.children)
+    this._unlinkChildren()
+  }
+
+  getChild<K extends keyof Children>(key: K) {
+    return this.children.get(key) as Children[K]
   }
 
   dump<R>(state: this['state']) {
     const dump: {[K in keyof this['state']]?: R} = <any>{}
 
-    Object.keys(this.children).forEach(key => {
-      const childDump = this.children[key].dump(state[key]) as R
+    for (const [key, node] of this.children) {
+      const childDump = node.dump(state[key]) as R
       if (childDump !== undefined) {
         dump[key] = childDump
       }
-    })
+    }
 
     if (Object.keys(dump).length) {
       return dump
@@ -53,37 +60,37 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
   load<R>(dump: {[K in keyof this['state']]?: R} = {}, updateContext: UpdateContext<Schema>): this['state'] {
     const state: this['state'] = <any>{}
 
-    Object.keys(this.children).forEach(key => {
-      const childState = this.children[key].load(
+    for (const [key, node] of this.children) {
+      const childState = node.load(
         dump[key],
-        (updateContext as UpdateContext<Schema>).setModel(this.children[key])
+        (updateContext as UpdateContext<Schema>).setModel(node)
       )
       if (childState !== undefined) {
         state[key] = childState
       }
-    })
+    }
 
     return this.update(state, updateContext.setModel(this))
   }
 
   process(action$: ActionsObservable) {
-    const mapper = (key: keyof Children) => {
-      const model = this.children[key]
-      let a$ = action$.filter(action => {
+    const onSubscribe = (observer: Observer<Subscribable<ActionLike>>) => {
+      for (const model of this.children.values()) {
+        let a$ = action$.filter(action => {
           return matchActionTarget(model.keyPath, action.target)
-      }) as ActionsObservable
+        }) as ActionsObservable
 
-      if (model.accept) {
-        a$ = a$.ofType(Store.START, Store.STOP, ...model.accept)
+        if (model.accept) {
+          a$ = a$.ofType(Store.START, Store.STOP, ...model.accept)
+        }
+
+        observer.next(model.process(a$, model))
       }
-
-      return model.process(a$, model)
     }
 
-    return Observable.merge(
-      ...Object.keys(this.children)
-        .map(mapper)
-    )
+    return (
+      Observable.create(onSubscribe) as Observable<Subscribable<ActionLike>>
+    ).mergeAll()
   }
 
   update(state: this['state'], context: UpdateContext<Schema>): this['state'] {
@@ -94,13 +101,10 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
       state = <this['state']>{}
     }
 
-    Object.keys(this.children).forEach((key: keyof Children) => {
-      state = <this['state']>state
-      const model = this.children[key]
-
+    for (const [key, model] of this.children) {
       const cur = state[key]
-
       let next = cur
+
       context.setModel(model)
       if (context.shouldUpdate) {
         next = model.update(cur, context as UpdateContext<typeof model['dependencies']>)
@@ -114,8 +118,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
         changed = true
         context.markUpdated()
       }
-
-    })
+    }
 
     context.setModel(this)
     if (changed) {
@@ -128,59 +131,57 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
   }
 
   private _linkChildren() {
-    const children = this.children
-    return Object
-      .keys(children)
-      .map(<K extends keyof Children>(k: K) => {
-        const childKeyPath = (this.keyPath === '/')
-          ? `/${k}`
-          : `${this.keyPath}/${k}`
-        return children[k].link(childKeyPath, this.store)
-      })
+    let callbacks: Array<() => void> = []
+
+    for (const [key, node] of this.children) {
+      callbacks.push(node.link(join(this.keyPath, `/${key}`), this.store))
+    }
+
+    return callbacks
   }
 
-  private _unlinkChildren(children: Children) {
-    Object
-      .keys(children)
-      .forEach(<K extends keyof Children>(k: K) => {
-        children[k].unlink()
-      })
+  private _unlinkChildren() {
+    for (const [_, node] of this.children) {
+      node.unlink()
+    }
   }
 
   private _sortChildren() {
-    const children = this.children
-
+    let sortedChildren = [] as [keyof Children, Children[keyof Children]][]
     const topo = new Toposort()
 
-    Object
-      .keys(children)
-      .map(key => [key, children[key]] as [keyof Children, ModelInterface])
-      .forEach(([key, node]) => {
-        const hasUnlinkedDependencies = Object.keys(node.dependencies)
-          .filter(d => !node.dependencies[d].isLinked)
-          .length
+    for (const [key, node] of this.children) {
+      let deps: string[] = []
 
-        if (hasUnlinkedDependencies) {
+      Object.keys(node.dependencies).forEach(k => {
+        const dep = node.dependencies[k]
+        // const siblingKey = this._childKeysByModel.get(dep)
+
+        // if (siblingKey !== undefined) {
+        //   deps.push(siblingKey)
+        // }
+
+        if (!dep.isLinked) {
           throw new Error(`Node (${node.keyPath}) has unlinked dependencies`)
         }
 
-        const deps = Object
-          .keys(node.dependencies)
-          .map((key: string) => relative(this.keyPath, node.dependencies[key].keyPath).split('/')[0])
-          .filter(dependency => dependency !== '..')
-
-        topo.add(key, deps)
+        const siblingKey = relative(this.keyPath, dep.keyPath).split('/')[0]
+        if (siblingKey !== "..") {
+          deps.push(siblingKey)
+        }
       })
 
-    const sortedChildren: Children = <Children>{}
+      topo.add(key, deps)
+    }
+
     topo.sort().reverse().forEach((key: string) => {
-      const node = children[key]
+      const node = this.children.get(key)
       if (node !== undefined) {
-        sortedChildren[key] = children[key]
+        sortedChildren.push([key, node])
       }
     })
 
-    this.children = sortedChildren
+    this.children = new Map(sortedChildren)
   }
 
   private _combineActionTypeMatchLists(children: Children) {
@@ -201,7 +202,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
   private _createExternalDependencies() {
     const children = this.children
 
-    type Row = [keyof Children, ModelInterface]
+    type Row = [keyof Children, Children[keyof Children]]
 
     const dependencyReducer = (a: Schema, [key, node]: Row) => {
       const ds = node.dependencies
@@ -214,10 +215,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
       return a
     }
 
-    this._dependencies = Object
-      .keys(children)
-      .map(key => [key, children[key]])
-      .reduce(dependencyReducer, {})
+    this._dependencies = [...this.children].reduce(dependencyReducer, {} as Schema)
   }
 }
 
