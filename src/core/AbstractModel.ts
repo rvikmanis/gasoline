@@ -7,8 +7,6 @@ import { matchActionType } from '../helpers/matchActionType';
 import {
     ActionCreatorMap,
     ActionLike,
-    Dict,
-    DispatcherBoundActionCreatorMap,
     Epic,
     ModelInterface,
     Reducer,
@@ -17,6 +15,8 @@ import {
 import { Store } from './Store';
 import { UpdateContext } from './UpdateContext';
 import { clone } from "../helpers/clone";
+import { ActionsObservable } from "./ActionsObservable";
+import { Subscribable } from "rxjs/Observable";
 
 type Deferred<T> = {
     promise: Promise<T>,
@@ -31,56 +31,59 @@ function createDeferred<T>() {
     return deferred
 }
 
-export abstract class AbstractModel<State, ActionCreators extends ActionCreatorMap = {}, Dependencies extends Schema = {}> implements ModelInterface {
-    protected _actionCreators: ActionCreators;
-    private _linkedActionCreators: ActionCreators;
-    private _actions: DispatcherBoundActionCreatorMap<ActionCreators>;
+export abstract class AbstractModel<
+    State,
+    ActionCreators extends ActionCreatorMap = {},
+    Dependencies extends Schema = {}
+> implements ModelInterface {
+    // Core internals
     private _allSubscriptions: Subscription;
-    private _whenLinked: Deferred<void>
-    private _actionTypeMatchCache: Dict<boolean>
+    private _whenLinked: Deferred<void>;
+    private _actionTypeMatchCache: { [key: string]: boolean };
+    private _keyPath: string;
+    private _store: Store;
+    private _isDisposed: boolean;
+    private _isLinked: boolean;
+    private _linkedActionCreators: ActionCreators;
+    private _actions: {[K in keyof ActionCreators]: (...args: any[]) => void };
 
-    public abstract update: Reducer<State, Dependencies>;
-    public abstract process: Epic<AbstractModel<State, ActionCreators, Dependencies>>;
-    public dependencies: Dependencies;
-    public isLinked: boolean
-    public isDisposed: boolean
-    public state$: Observable<State>
-    public accept?: string[]
-    public keyPath: string
-    public store: Store
+    // Options internals
+    abstract update(state: State | undefined, updateContext: UpdateContext<Dependencies>): State;
+    abstract process(action$: ActionsObservable, model: this): Subscribable<ActionLike>;
+    protected _dependencies: Dependencies;
+    protected _actionCreators: ActionCreators;
+    protected _accept?: string[];
 
-    public constructor() {
-        if (this.constructor === AbstractModel) {
-            throw new TypeError('Cannot instantiate abstract class AbstractModel')
-        }
+    // Core API
+    public readonly state$: Observable<State>;
 
-        this._actionCreators = {} as ActionCreators
-        this._allSubscriptions = new Subscription
-        this._whenLinked = createDeferred()
-        this._actionTypeMatchCache = {}
+    public get keyPath() {
+        return this._keyPath;
+    }
 
-        this.dependencies = {} as Dependencies
-        this.isLinked = false
-        this.isDisposed = false
+    public get store() {
+        return this._store;
+    }
 
-        this.state$ = Observable.create((observer: Observer<State>) => {
-            if (this.isDisposed) {
-                observer.error(`Cannot subscribe to disposed model: ${this.keyPath}`)
-                return
-            }
+    public get isLinked() {
+        return this._isLinked;
+    }
 
-            const cancel = this._listenState(state => {
-                observer.next(state)
-            })
-
-            this._allSubscriptions.add(cancel)
-
-            return cancel;
-        })
+    public get isDisposed() {
+        return this._isDisposed;
     }
 
     public get state(): State {
         return this.getStateFromDigest(this.store.digest)
+    }
+
+    // Options API
+    public get dependencies() {
+        return this._dependencies;
+    }
+
+    public get accept() {
+        return this._accept;
     }
 
     public get actionCreators() {
@@ -107,6 +110,37 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
         return this._actions
     }
 
+    // Methods
+    constructor() {
+        if (this.constructor === AbstractModel) {
+            throw new TypeError('Cannot instantiate abstract class AbstractModel')
+        }
+
+        this._allSubscriptions = new Subscription
+        this._whenLinked = createDeferred()
+        this._actionTypeMatchCache = {}
+        this._isLinked = false
+        this._isDisposed = false
+
+        this._actionCreators = {} as ActionCreators
+        this._dependencies = {} as Dependencies
+
+        this.state$ = Observable.create((observer: Observer<State>) => {
+            if (this.isDisposed) {
+                observer.error(`Cannot subscribe to disposed model: ${this.keyPath}`)
+                return
+            }
+
+            const cancel = this._listenState(state => {
+                observer.next(state)
+            })
+
+            this._allSubscriptions.add(cancel)
+
+            return cancel;
+        })
+    }
+
     link(keyPath: string, store: Store<any>): () => void {
         if (this.isDisposed) {
             throw new Error(`Cannot link disposed model '${this.keyPath}'`)
@@ -116,9 +150,9 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
             throw new Error(`Model '${this.keyPath}' is already linked`)
         }
 
-        this.keyPath = keyPath
-        this.store = store
-        this.isLinked = true
+        this._keyPath = keyPath
+        this._store = store
+        this._isLinked = true
 
         return () => {
             this._whenLinked.resolve()
@@ -126,26 +160,19 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
     }
 
     unlink() {
-        delete this.store
-        this.isLinked = false
-        this.isDisposed = true
-
-        this._allSubscriptions.unsubscribe();
-    }
-
-    private _callNowOrWhenDoneLinked(callback: () => void) {
-        if (this.isLinked) {
-            callback();
-            return
+        if (this.isDisposed) {
+            throw new Error(`Cannot dispose already disposed model '${this.keyPath}'`)
         }
 
-        this._whenLinked.promise.then(() => {
-            if (this.isDisposed) {
-                console.warn(`whenLinked callback failed to run: Model '${this.keyPath}' is disposed`)
-                return;
-            }
-            callback();
-        })
+        if (!this.isLinked) {
+            throw new Error(`Model '${this.keyPath}' is not linked`)
+        }
+
+        delete this._store
+        this._isLinked = false
+        this._isDisposed = true
+
+        this._allSubscriptions.unsubscribe();
     }
 
     matchActionType(actionType: string) {
@@ -161,12 +188,27 @@ export abstract class AbstractModel<State, ActionCreators extends ActionCreatorM
         return state
     }
 
-    load(dump: any, updateContext: UpdateContext<Schema>): State | void {
+    load(dump: any, updateContext: UpdateContext<Dependencies>): State | void {
         return dump
     }
 
-    getStateFromDigest(digest: Dict<any>): State {
+    getStateFromDigest(digest: { [key: string]: any }): State {
         return digest[this.keyPath]
+    }
+
+    private _callNowOrWhenDoneLinked(callback: () => void) {
+        if (this.isLinked) {
+            callback();
+            return
+        }
+
+        this._whenLinked.promise.then(() => {
+            if (this.isDisposed) {
+                console.warn(`whenLinked callback failed to run: Model '${this.keyPath}' is disposed`)
+                return;
+            }
+            callback();
+        })
     }
 
     private _listenState(listener: (state: State) => void) {

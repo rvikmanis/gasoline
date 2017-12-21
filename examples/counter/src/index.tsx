@@ -6,15 +6,326 @@ import './index.css';
 
 const counter = new gasoline.Model({
 
-  initialState: 0,
-
-  actionHandlers: {
-    "INCREMENT": state => ++state
-  },
-
   actionCreators: {
     increment() {
       return { type: "INCREMENT" }
+    },
+    inc10() {
+      return { type: "INC_10" }
+    }
+  },
+
+  process(action$) {
+    const action = counter.actionCreators.increment()
+    return action$.ofType("INC_10").concatMapTo([
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+
+      action, action, action, action, action, action,
+      action, action, action, action,
+    ]).observeOn(Rx.Scheduler.async)
+  },
+
+  update(state: number = 0, context) {
+    switch (context.action.type) {
+      case "INCREMENT":
+        return state + 1
+      default:
+        return state
     }
   }
 
@@ -22,30 +333,42 @@ const counter = new gasoline.Model({
 
 const autoIncrement = new gasoline.Model({
 
-  initialState: false,
-
-  actionHandlers: {
-    "TOGGLE_AUTO_INCREMENT": state => !state
-  },
-
   actionCreators: {
     toggle() {
       return { type: "TOGGLE_AUTO_INCREMENT" }
     }
   },
 
+  update(state: boolean = true, context) {
+    switch (context.action.type) {
+      case "TOGGLE_AUTO_INCREMENT":
+        return !state
+      default:
+        return state
+    }
+  },
+
   process(action$, model) {
     return action$
-      .ofType("TOGGLE_AUTO_INCREMENT", gasoline.Store.START)
+
+      // When the store starts, and
+      // each time TOGGLE_AUTO_INCREMENT is dispatched,
+      .ofType(gasoline.Store.START, "TOGGLE_AUTO_INCREMENT")
       .switchMap(() => {
+
         if (model.state) {
+          // if auto increment is enabled, emit INCREMENT every second
           const action = counter.actionCreators.increment()
           return Rx.Observable.interval(1000).mapTo(action)
         }
+
+        // otherwise emit nothing.
         return Rx.Observable.empty()
+
+        // Note: switchMap takes care of subscribing to the latest stream
+        // and unsubscribing from previous streams.
       })
   }
-
 });
 
 const rootModel = gasoline.combineModels({
@@ -59,7 +382,8 @@ const createContainer = gasoline.connect(
   rootModel.state$,
   {
     increment: counter.actions.increment,
-    toggleAutoIncrement: autoIncrement.actions.toggle
+    toggleAutoIncrement: autoIncrement.actions.toggle,
+    inc10: counter.actions.inc10
   }
 )
 
@@ -77,10 +401,14 @@ const CounterApp = createContainer(props => {
         </button>
   )
 
+  const inc10Btn = (
+    <button onClick={props.inc10}>inc. 10</button>
+  )
+
   return (
     <div>
       <div>{props.counter}</div>
-      <div>{incrementBtn} {toggleBtn}</div>
+      <div>{incrementBtn} {toggleBtn} {inc10Btn}</div>
     </div>
   )
 })
@@ -91,9 +419,9 @@ store.ready(() => {
     document.querySelector("#app")
   )
 
-  store.action$.withLatestFrom(store.model.state$).subscribe(([action, state]) => {
-    console.log(action, state)
-  })
+  // store.action$.withLatestFrom(store.model.state$).subscribe(([action, state]) => {
+  //   console.log(action, state)
+  // })
 })
 
 store.start()

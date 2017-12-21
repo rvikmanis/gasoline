@@ -1,45 +1,54 @@
-import { ActionCreatorMap, ModelInterface, Epic, Reducer, Schema } from '../interfaces';
+import { ActionCreatorMap, ModelInterface, ActionLike, Epic, Reducer, Schema } from '../interfaces';
 import { AbstractModel } from './AbstractModel';
 import { UpdateContext } from "./UpdateContext";
 import { Observable } from "rxjs";
+import { Subscribable } from "rxjs/Observable"
+import { ActionsObservable } from "./ActionsObservable";
 
-export interface ModelOptions<State, ActionCreators extends ActionCreatorMap = {}, Dependencies extends Schema = {}> {
+export interface ModelOptions<
+    State,
+    ActionCreators extends ActionCreatorMap = {},
+    Dependencies extends Schema = {}
+> {
     dependencies?: Dependencies,
     update?: Reducer<State, Dependencies>,
     process?: Epic<ModelInterface>,
     accept?: string[],
     dump?: (state: State | void) => any,
-    load?: (dump: any, updateContext: UpdateContext<Schema>) => State | void,
+    load?: (dump: any, updateContext: UpdateContext<Dependencies>) => State | void,
     actionCreators?: ActionCreators,
 }
 
-export class Model<State = void, ActionCreators extends ActionCreatorMap = {}, Dependencies extends Schema = {}> extends AbstractModel<State, ActionCreators, Dependencies> {
-    update: Reducer<State, Dependencies>;
-    process: Epic<AbstractModel<State, ActionCreators, Dependencies>>;
+export class Model<
+    State = void,
+    ActionCreators extends ActionCreatorMap = {},
+    Dependencies extends Schema = {}
+> extends AbstractModel<State, ActionCreators, Dependencies> {
+    update(state: State, context: UpdateContext<Dependencies>) {
+        return state
+    }
+
+    process(action$: ActionsObservable, model: this) {
+        return Observable.empty() as Subscribable<ActionLike>
+    }
 
     constructor(options: ModelOptions<State, ActionCreators, Dependencies>) {
         super()
-        const {
-            dependencies,
-            update = ((s: State) => s),
-            process = (() => Observable.empty()),
-            accept,
-            dump,
-            load,
-            actionCreators
-        } = options
-
-        const stateLess = !options.update
 
         if (options.dependencies) {
-            this.dependencies = options.dependencies
+            this._dependencies = options.dependencies
         }
 
-        this.update = update
-        this.process = process
+        if (options.update) {
+            this.update = options.update
+        }
+
+        if (options.process) {
+            this.process = options.process
+        }
 
         if (options.accept) {
-            this.accept = options.accept
+            this._accept = options.accept
         }
 
         if (options.dump) {

@@ -9,10 +9,35 @@ type ActionCreators = {
 }
 
 class TextModel<Dependencies extends gasoline.Schema = {}> extends gasoline.AbstractModel<string, ActionCreators, Dependencies> {
+    initialValue: string;
     proxySetValue?: ProxySetValue
     getValue?: GetValue<Dependencies, string>
-    update: gasoline.Reducer<string, Dependencies>;
-    process: gasoline.Epic<this>;
+
+    update(state: string = this.initialValue, updateContext: gasoline.UpdateContext<Dependencies>) {
+        if (this.getValue) {
+            return this.getValue(updateContext.dependencies)
+        }
+
+        switch (updateContext.action.type) {
+            case "SET_VALUE":
+                return updateContext.action.payload as string
+            default:
+                return state
+        }
+    }
+
+    process(action$: gasoline.ActionsObservable, model: this) {
+        if (this.proxySetValue) {
+            return action$.ofType("SET_VALUE").switchMap(action => {
+                const out = this.proxySetValue(action)
+                if (out === undefined) {
+                    return Observable.empty()
+                }
+                return Observable.of(out) as Observable<gasoline.ActionLike>
+            })
+        }
+        return Observable.empty()
+    }
 
     constructor(options: {
         dependencies?: Dependencies,
@@ -24,12 +49,13 @@ class TextModel<Dependencies extends gasoline.Schema = {}> extends gasoline.Abst
 
         const {
             dependencies = {} as Dependencies,
+            initialValue = "",
             proxySetValue,
-            getValue,
-            initialValue = ""
+            getValue
         } = options
 
-        this.dependencies = dependencies
+        this._dependencies = dependencies
+        this.initialValue = initialValue
 
         if (proxySetValue) {
             this.proxySetValue = proxySetValue
@@ -45,33 +71,7 @@ class TextModel<Dependencies extends gasoline.Schema = {}> extends gasoline.Abst
             }
         }
 
-        this.accept = ["SET_VALUE"]
-
-        this.update = (state: string = initialValue, updateContext) => {
-            if (this.getValue) {
-                return this.getValue(updateContext.dependencies)
-            }
-
-            switch (updateContext.action.type) {
-                case "SET_VALUE":
-                    return updateContext.action.payload
-                default:
-                    return state
-            }
-        }
-
-        this.process = (action$, model) => {
-            if (this.proxySetValue) {
-                return action$.ofType("SET_VALUE").switchMap(action => {
-                    const out = this.proxySetValue(action)
-                    if (out === undefined) {
-                        return Observable.empty()
-                    }
-                    return Observable.of(out) as Observable<gasoline.ActionLike>
-                })
-            }
-            return Observable.empty()
-        }
+        this._accept = ["SET_VALUE"]
     }
 }
 

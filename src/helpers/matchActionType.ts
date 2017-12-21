@@ -1,9 +1,7 @@
-import { Dict } from "../interfaces";
-
 export function matchActionType(
   actionTypeList: string[],
   actionType: string,
-  cache?: Dict<boolean>
+  cache?: { [key: string]: boolean }
 ) {
   if (cache && actionType in cache) {
     return cache[actionType]

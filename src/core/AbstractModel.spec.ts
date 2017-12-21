@@ -1,9 +1,10 @@
 import { AbstractModel } from './AbstractModel'
 import { ModelInterface } from "../interfaces";
+import { Observable } from "rxjs";
 
 class ConcreteModel extends AbstractModel<any> {
-  update: any = () => undefined
-  process: any = () => undefined
+  update() {}
+  process() { return Observable.empty() }
 }
 
 describe('#constructor()', () => {

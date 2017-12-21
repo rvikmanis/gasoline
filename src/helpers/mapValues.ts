@@ -1,11 +1,13 @@
-import { Dict } from '../interfaces'
-
 export type Mapper<T, K, V> = (item: T, key: K) => V
 
-export function mapValues<T extends C[keyof C], V, C extends Dict<any>>(
+export function mapValues<
+  V,
+  C extends { [key: string]: any }
+>(
   collection: C,
-  mapper: Mapper<T, keyof C, V>
-): {[K in keyof C]: V } {
+  mapper: (item: C[keyof C], key: keyof C) => V
+): { [K in keyof C]: V } {
+
   if (typeof collection === 'object' && collection != null) {
     const result: any = {}
     Object.keys(collection).forEach(k => {
@@ -15,4 +17,5 @@ export function mapValues<T extends C[keyof C], V, C extends Dict<any>>(
   }
 
   throw new TypeError('Invalid collection type')
+
 }

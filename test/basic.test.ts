@@ -233,12 +233,12 @@ test('Dispatching', () => {
       manyDeps: '4, FOO+'
     }
   })
-  expect(store._lastUpdateContext.workingState.updated).toEqual({
-    '/': true,
-    '/counter': true,
-    '/aggregate': true,
-    '/aggregate/manyDeps': true
-  })
+  expect(store._lastUpdateContext.workingState.updated).toEqual(new Set([
+    '/counter',
+    '/aggregate/manyDeps',
+    '/aggregate',
+    '/'
+  ]))
 
   store.dispatch(setText('Bar'))
   expectState({
@@ -252,15 +252,15 @@ test('Dispatching', () => {
       manyDeps: '3, BAR'
     }
   })
-  expect(store._lastUpdateContext.workingState.updated).toEqual({
-    '/': true,
-    '/text': true,
-    '/text/text': true,
-    '/text/characterList': true,
-    '/numChars': true,
-    '/aggregate': true,
-    '/aggregate/manyDeps': true
-  })
+  expect(store._lastUpdateContext.workingState.updated).toEqual(new Set([
+    '/text/text',
+    '/text/characterList',
+    '/text',
+    '/numChars',
+    '/aggregate/manyDeps',
+    '/aggregate',
+    '/'
+  ]))
 
   store.dispatch(inc())
   expectState({
@@ -274,12 +274,12 @@ test('Dispatching', () => {
       manyDeps: '6, BAR'
     }
   })
-  expect(store._lastUpdateContext.workingState.updated).toEqual({
-    '/': true,
-    '/counter': true,
-    '/aggregate': true,
-    '/aggregate/manyDeps': true
-  })
+  expect(store._lastUpdateContext.workingState.updated).toEqual(new Set([
+    '/counter',
+    '/aggregate/manyDeps',
+    '/aggregate',
+    '/'
+  ]))
 })
 
 test('Dumping', () => {

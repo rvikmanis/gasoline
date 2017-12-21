@@ -3,61 +3,35 @@ import { Subscribable } from 'rxjs/Observable'
 import { Store } from "./core/Store";
 import { ActionsObservable } from "./core/ActionsObservable";
 
-export interface Dict<T> {
-  [key: string]: T
-}
-
-export interface Listener {
-  (): void
-}
-
-export interface ActionMeta {
-  dispatch?: {
-    id: string,
-    time: number,
-    parent?: string
-  },
-  replyTo?: string,
-  origin?: string
-}
-
-export interface DispatchedActionMeta {
-  dispatch: {
-    id: string,
-    time: number,
-    parent?: string
-  }
-}
-
-export interface ActionLike {
-  type: string;
+export interface ActionLike<T extends string = string> {
+  type: T;
   target?: string | string[];
-  meta?: ActionMeta;
+  meta?: { [key: string]: any };
   payload?: any;
 }
 
 export interface ActionCreator {
   (...args: any[]): ActionLike
 }
-export type ActionCreatorMap = Dict<ActionCreator>
-export type DispatcherBoundActionCreatorMap<AC extends ActionCreatorMap> = {[K in keyof AC]: (...args: any[]) => void }
+export type ActionCreatorMap = { [key: string]: ActionCreator }
 
 export interface ModelInterface {
-  accept?: string[];
-  update: Reducer<any, Schema>;
-  process: Epic<ModelInterface>;
-  dependencies: Schema;
-  state: any;
+  readonly accept?: string[];
+  readonly update: Reducer<any, Schema>;
+  readonly process: Epic<ModelInterface>;
 
-  keyPath: string;
-  store: Store<any>;
-  isLinked: boolean;
-  isDisposed: boolean;
+  readonly dependencies: Schema;
+  readonly state: any;
 
-  actionCreators: ActionCreatorMap;
-  actions: DispatcherBoundActionCreatorMap<any>;
+  readonly keyPath: string;
+  readonly store: Store<any>;
+  readonly isLinked: boolean;
+  readonly isDisposed: boolean;
 
-  getStateFromDigest(digest: Dict<any>): any;
+  readonly actionCreators: ActionCreatorMap;
+  readonly actions: {[K in keyof any]: (...args: any[]) => void };
+
+  getStateFromDigest(digest: { [key: string]: any }): any;
   matchActionType(actionType: string): boolean;
   dump(state: any): any;
   load(dump: any, updateContext: UpdateContext<Schema>): any;
@@ -66,12 +40,12 @@ export interface ModelInterface {
 }
 
 export interface Reducer<S, D extends Schema> {
-  (state: S, context: UpdateContext<D>): S
+  (state: S | undefined, context: UpdateContext<D>): S
 }
 
 export interface Epic<Model extends ModelInterface> {
   (action$: ActionsObservable, model: Model): Subscribable<ActionLike>
 }
 
-export type Schema = Dict<ModelInterface>
+export type Schema = { [key: string]: ModelInterface }
 export type StateOf<S extends Schema> = {[K in keyof S]: S[K]['state']}

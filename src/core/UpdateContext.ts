@@ -1,16 +1,16 @@
 import { relative } from 'path';
-import { ModelInterface, ActionLike, Dict, StateOf, Schema } from "../interfaces";
+import { ModelInterface, ActionLike, StateOf, Schema } from "../interfaces";
 import { Store } from "./Store";
 import { mapValues } from "../helpers/mapValues";
 import { matchActionTarget } from "../helpers/matchActionTarget";
 
 export type WorkingState = {
-  digest: Dict<any>;
-  updated: Dict<boolean>;
+  digest: { [key: string]: any };
+  updated: Set<string>;
 };
 
 const createEmptyWorkingState = () => (
-  { digest: {}, updated: {} }
+  { digest: {}, updated: new Set<string>() }
 )
 
 export class UpdateContext<Dependencies extends Schema, A extends ActionLike = ActionLike> {
@@ -55,10 +55,10 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
     )
 
     let dependenciesHaveChanged: boolean = false
-    const updatedKeys = Object.keys(this.workingState.updated)
     // TODO: improve performance
-    Object.keys(this.model.dependencies).map(d => this.model.dependencies[d].keyPath).forEach(kp => {
-      if (updatedKeys.indexOf(kp) > -1) {
+    Object.keys(this.model.dependencies).forEach(d => {
+      const kp = this.model.dependencies[d].keyPath
+      if (this.workingState.updated.has(kp)) {
         dependenciesHaveChanged = true
       }
     })
@@ -79,6 +79,6 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
   }
 
   public markUpdated() {
-    this.workingState.updated[this.model.keyPath] = true
+    this.workingState.updated.add(this.model.keyPath)
   }
 }

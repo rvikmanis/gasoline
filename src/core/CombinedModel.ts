@@ -1,5 +1,5 @@
 import { matchActionTarget } from '../helpers/matchActionTarget';
-import { Dict, ActionLike, ModelInterface, StateOf, Schema } from "../interfaces";
+import { ActionLike, ModelInterface, StateOf, Schema } from "../interfaces";
 import { relative } from 'path'
 import { UpdateContext } from "./UpdateContext";
 import { AbstractModel } from "./AbstractModel";
@@ -14,16 +14,15 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
   constructor(children: Children) {
     super()
     this.children = children
-    this.accept = this._combineActionTypeMatchLists(children)
+    this._accept = this._combineActionTypeMatchLists(children)
   }
 
   link(keyPath: string, store: Store<any>) {
     const onLink = super.link(keyPath, store)
-    const childrenOnLink = this._linkChildren(this.children)
+    const childrenOnLink = this._linkChildren()
 
-    const sortedChildren = this._getSortedChildren(this.children)
-    this.dependencies = this._createExternalDependencies(sortedChildren)
-    this.children = sortedChildren
+    this._sortChildren()
+    this._createExternalDependencies()
 
     return () => {
       childrenOnLink.forEach(cb => cb())
@@ -67,7 +66,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     return this.update(state, updateContext.setModel(this))
   }
 
-  process = (action$: ActionsObservable) => {
+  process(action$: ActionsObservable) {
     const mapper = (key: keyof Children) => {
       const model = this.children[key]
       let a$ = action$.filter(action => {
@@ -87,7 +86,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     )
   }
 
-  update = (state: this['state'], context: UpdateContext<Schema>): this['state'] => {
+  update(state: this['state'], context: UpdateContext<Schema>): this['state'] {
     const nextState = <this['state']>{}
     let changed = false
 
@@ -128,7 +127,8 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     return state
   }
 
-  private _linkChildren(children: Children) {
+  private _linkChildren() {
+    const children = this.children
     return Object
       .keys(children)
       .map(<K extends keyof Children>(k: K) => {
@@ -147,7 +147,9 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
       })
   }
 
-  private _getSortedChildren(children: Children) {
+  private _sortChildren() {
+    const children = this.children
+
     const topo = new Toposort()
 
     Object
@@ -178,7 +180,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
       }
     })
 
-    return sortedChildren
+    this.children = sortedChildren
   }
 
   private _combineActionTypeMatchLists(children: Children) {
@@ -196,7 +198,9 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     return accept as string[] | undefined
   }
 
-  private _createExternalDependencies(children: Children) {
+  private _createExternalDependencies() {
+    const children = this.children
+
     type Row = [keyof Children, ModelInterface]
 
     const dependencyReducer = (a: Schema, [key, node]: Row) => {
@@ -210,7 +214,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
       return a
     }
 
-    return Object
+    this._dependencies = Object
       .keys(children)
       .map(key => [key, children[key]])
       .reduce(dependencyReducer, {})

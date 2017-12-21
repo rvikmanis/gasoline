@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "description": "State management library for lazy programmers",
   "scripts": {
-    "test": "jest --verbose",
+    "test": "tsc --noemit && jest --verbose",
     "b:_clean": "rm -rf ./build ./dist",
     "b:_build": "tsc && cp -R ./src/vendor ./build/step-1 && rollup -c",
     "b:_minify": "babili --source-maps=true -o build/step-2/gasoline.min.js build/step-2/gasoline.js",
@@ -35,7 +35,6 @@
     "babel-eslint": "6",
     "babel-jest": "^19.0.0",
     "babel-plugin-external-helpers": "^6.22.0",
-    "babel-plugin-transform-flow-strip-types": "^6.22.0",
     "babel-preset-es2015": "^6.24.0",
     "babel-preset-react": "^6.23.0",
     "babel-preset-stage-0": "^6.22.0",
@@ -44,13 +43,14 @@
     "eslint": "^3.19.0",
     "eslint-config-airbnb-base": "^11.1.3",
     "eslint-plugin-import": "^2.2.0",
-    "flow-bin": "0.43",
     "jest": "^20.0.4",
+    "react": "^15.6.1",
     "rollup": "^0.49.2",
     "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-commonjs": "^8.2.0",
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-resolve": "^3.0.0",
+    "rxjs": "5",
     "shallow-equals": "^1.0.0",
     "toposort-class": "^1.0.1",
     "ts-jest": "^20.0.4",
@@ -59,7 +59,7 @@
     "ws": "2.3.1"
   },
   "peerDependencies": {
-    "react": "15.6",
+    "react": "^15.6.1",
     "rxjs": "5"
   },
   "jest": {

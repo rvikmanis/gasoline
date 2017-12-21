@@ -2,7 +2,7 @@ import { Observable, Subscription, Subject, BehaviorSubject, Observer } from 'rx
 import { ISubscription } from 'rxjs/Subscription';
 
 import { clone } from '../helpers/clone';
-import { ActionLike, Dict, DispatchedActionMeta, Listener } from '../interfaces';
+import { ActionLike } from '../interfaces';
 import uuid from '../vendor/uuid';
 import { AbstractModel } from './AbstractModel';
 import { ActionsObservable } from './ActionsObservable';
@@ -15,12 +15,14 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
 
     private _lastUpdateContext?: UpdateContext<any>;
     private _subscription?: Subscription;
-    private _listeners: Dict<Listener[]>;
+    private _listeners: { [key: string]: (() => void)[] };
     private _input$: Subject<ActionLike>;
     private _action$: BehaviorSubject<ActionLike | undefined>;
+    private _bufferedUpdates: Set<string>;
+    private _dispatchDepth: number;
 
     public isStarted: boolean;
-    public digest: Dict<any>;
+    public digest: { [key: string]: any };
     public action$: Observable<ActionLike>;
     public model: M;
 
@@ -28,6 +30,8 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         this._listeners = {}
         this._input$ = new Subject<ActionLike>()
         this._action$ = new BehaviorSubject<ActionLike | undefined>(undefined)
+        this._bufferedUpdates = new Set();
+        this._dispatchDepth = 0;
 
         this.isStarted = false
         this.digest = {}
@@ -105,14 +109,15 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         }
         const updateContext = new UpdateContext({ type: Store.LOAD }, this.model)
         const state = this.model.load(dump, updateContext)
-        this._flush(state as this['model']['state'], updateContext)
+        this._saveDigest(state as this['model']['state'], updateContext)
+        this._flushUpdates()
     }
 
     dump() {
         return this.model.dump(this.model.state)
     }
 
-    listen(eventName: string, listener: Listener) {
+    listen(eventName: string, listener: () => void) {
         const wrapper = () => { listener() }
         this._listeners[eventName] = (this._listeners[eventName] || []).concat(wrapper)
         return () => {
@@ -143,24 +148,24 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
             throw new Error('Cannot dispatch before store is started. Call the start() method on your store')
         }
 
-        const meta: DispatchedActionMeta = {
+        this._dispatchDepth++
+
+        const meta = {
             dispatch: {
                 id: uuid(),
                 time: Date.now()
             }
         }
 
-        if (input.meta) {
-            if (input.meta.replyTo) {
-                meta.dispatch.parent = input.meta.replyTo
-            }
-        }
-
         const action = { ...input, meta }
         const ctx = this._createUpdateContext(action)
         const state = this.model.update(this.model.state, ctx)
-        this._flush(state, ctx)
+        this._saveDigest(state, ctx)
         this._input$.next(ctx.action)
+
+        if (--this._dispatchDepth === 0) {
+            this._flushUpdates()
+        }
     }
 
     private _invokeListeners(eventName: string) {
@@ -172,7 +177,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         }
     }
 
-    private _flush(state: this['model']['state'], ctx: UpdateContext<any>) {
+    private _saveDigest(state: this['model']['state'], ctx: UpdateContext<any>) {
         ctx.setModel(this.model)
         ctx.updateDigest(state)
         if (state !== this.model.state) {
@@ -182,16 +187,20 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
 
         this._lastUpdateContext = ctx
 
-        const updated = ctx.workingState.updated
-        Object.keys(updated).forEach(keyPath => {
-            if (updated[keyPath]) {
-                this._invokeListeners(`update ${keyPath}`)
-            }
-        })
+        for (const keyPath of ctx.workingState.updated) {
+            this._bufferedUpdates.add(keyPath)
+        }
+    }
+
+    private _flushUpdates() {
+        for (const keyPath of this._bufferedUpdates) {
+            this._invokeListeners(`update ${keyPath}`)
+        }
+        this._bufferedUpdates.clear()
     }
 
     private _createUpdateContext(action: ActionLike): UpdateContext<any> {
-        const workingState = { updated: {}, digest: clone(this.digest) }
+        const workingState = { updated: new Set<string>(), digest: clone(this.digest) }
         return new UpdateContext(action, this.model, workingState)
     }
 }

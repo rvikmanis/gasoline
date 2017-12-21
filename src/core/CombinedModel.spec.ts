@@ -1,10 +1,11 @@
 import { CombinedModel } from './CombinedModel'
 import { AbstractModel } from './AbstractModel'
 import { ModelInterface } from "../interfaces";
+import { Observable } from "rxjs";
 
 class FakeModel extends AbstractModel<any> {
-  process: any
-  update: any
+  process() { return Observable.empty() }
+  update() {}
   constructor(props: any = {}) {
     super()
     Object.assign(this, props)
@@ -54,8 +55,8 @@ describe('#link(keyPath, store)', () => {
 })
 
 describe('#constructor(children: object)', () => {
-  let a: ModelInterface
-  let b: ModelInterface
+  let a: any
+  let b: any
   let c: CombinedModel<any>
 
   beforeEach(() => {
@@ -64,14 +65,14 @@ describe('#constructor(children: object)', () => {
   })
 
   test('sets #accept to combined match-list from all children', () => {
-    a.accept = ['A']
-    b.accept = ['B']
+    a._accept = ['A']
+    b._accept = ['B']
     c = new CombinedModel({ a, b })
     expect(c.accept).toEqual(['B', 'A'])
   })
 
   test('sets #accept to undefined if at least one child has undefined match-list', () => {
-    a.accept = ['A']
+    a._accept = ['A']
     c = new CombinedModel({ a, b })
     expect(c.accept).toBe(undefined)
   })
