@@ -61,7 +61,7 @@ function setup() {
   })
 
   const nChars = new Model({
-    dependencies: { chars: combinedTxtModel.getChild("characterList") },
+    dependencies: { chars: combinedTxtModel.getChildByKey("characterList") },
     update(state: number, { dependencies }) {
       return dependencies.chars.length
     },
@@ -91,7 +91,7 @@ function setup() {
 
   const mDeps = new Model({
     dependencies: {
-      text: combinedTxtModel.getChild("text"),
+      text: combinedTxtModel.getChildByKey("text"),
       counter: cntr,
       numChars: nChars
     },
@@ -108,10 +108,10 @@ function setup() {
   })
 
   const root = new CombinedModel({
+    aggregate: aggr,
     numChars: nChars,
     text: combinedTxtModel,
-    counter: cntr,
-    aggregate: aggr
+    counter: cntr
   })
 
   const s = new Store(root)

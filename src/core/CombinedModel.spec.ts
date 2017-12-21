@@ -46,7 +46,7 @@ describe('#link(keyPath, store)', () => {
     expect(a.store).toBe(undefined)
     expect(b.store).toBe(undefined)
 
-    c.link('/', Object.create(null))
+    c.link(Object.create(null))
     expect(a.keyPath).toBe('/a')
     expect(b.keyPath).toBe('/b')
     expect(a.store).toBe(c.store)

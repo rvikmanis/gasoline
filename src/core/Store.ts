@@ -42,7 +42,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         })
         this.model = model
 
-        const onLinked = model.link('/', this)
+        const onLinked = model.link(this)
         onLinked()
     }
 
@@ -137,7 +137,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         this.model = model
 
         oldModel.unlink()
-        const onLinked = this.model.link('/', this)
+        const onLinked = this.model.link(this)
 
         this.load(dump)
         onLinked();

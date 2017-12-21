@@ -23,7 +23,7 @@ describe('#link(keyPath, store)', () => {
   let store: any
 
   function linking() {
-    return model.link('/', store)
+    return model.link(store)
   }
 
   beforeEach(() => {

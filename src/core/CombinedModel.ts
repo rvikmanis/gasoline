@@ -20,15 +20,16 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     this._accept = this._combineActionTypeMatchLists(children)
   }
 
-  link(keyPath: string, store: Store<any>) {
-    const onLink = super.link(keyPath, store)
+  link(store: Store<any>, parent?: ModelInterface, key?: string) {
+    const onLink = super.link(store, parent, key)
     const childrenOnLink = this._linkChildren()
-
-    this._sortChildren()
-    this._createExternalDependencies()
 
     return () => {
       childrenOnLink.forEach(cb => cb())
+
+      this._sortChildren()
+      this._createExternalDependencies()
+
       onLink()
     }
   }
@@ -38,8 +39,12 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     this._unlinkChildren()
   }
 
-  getChild<K extends keyof Children>(key: K) {
+  getChildByKey<K extends keyof Children>(key: K) {
     return this.children.get(key) as Children[K]
+  }
+
+  isAncestorOf(descendant: ModelInterface) {
+    return descendant.isDescendantOf(this)
   }
 
   dump<R>(state: this['state']) {
@@ -134,7 +139,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     let callbacks: Array<() => void> = []
 
     for (const [key, node] of this.children) {
-      callbacks.push(node.link(join(this.keyPath, `/${key}`), this.store))
+      callbacks.push(node.link(this.store, this, key))
     }
 
     return callbacks
@@ -155,11 +160,6 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
 
       Object.keys(node.dependencies).forEach(k => {
         const dep = node.dependencies[k]
-        // const siblingKey = this._childKeysByModel.get(dep)
-
-        // if (siblingKey !== undefined) {
-        //   deps.push(siblingKey)
-        // }
 
         if (!dep.isLinked) {
           throw new Error(`Node (${node.keyPath}) has unlinked dependencies`)
@@ -184,21 +184,6 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     this.children = new Map(sortedChildren)
   }
 
-  private _combineActionTypeMatchLists(children: Children) {
-    let accept: string[] | undefined = []
-    Object.keys(children).forEach(key => {
-      const child = children[key]
-      if (accept) {
-        if (!child.accept) {
-          accept = undefined
-        } else {
-          accept.splice(0, 0, ...child.accept)
-        }
-      }
-    })
-    return accept as string[] | undefined
-  }
-
   private _createExternalDependencies() {
     const children = this.children
 
@@ -216,6 +201,21 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     }
 
     this._dependencies = [...this.children].reduce(dependencyReducer, {} as Schema)
+  }
+
+  private _combineActionTypeMatchLists(children: Children) {
+    let accept: string[] | undefined = []
+    Object.keys(children).forEach(key => {
+      const child = children[key]
+      if (accept) {
+        if (!child.accept) {
+          accept = undefined
+        } else {
+          accept.splice(0, 0, ...child.accept)
+        }
+      }
+    })
+    return accept as string[] | undefined
   }
 }
 

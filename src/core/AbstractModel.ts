@@ -1,5 +1,5 @@
 import { createActionTarget } from '../helpers/createActionTarget';
-import { dirname, resolve } from 'path';
+import { dirname, resolve, join } from 'path';
 import { Observable, Observer, Subscription } from 'rxjs';
 
 import { mapValues } from '../helpers/mapValues';
@@ -44,6 +44,7 @@ export abstract class AbstractModel<
     private _isLinked: boolean;
     private _linkedActionCreators: ActionCreators;
     private _actions: {[K in keyof ActionCreators]: (...args: any[]) => void };
+    private _parent?: ModelInterface;
 
     // Options internals
     abstract update(state: State | undefined, updateContext: UpdateContext<Dependencies>): State;
@@ -57,6 +58,10 @@ export abstract class AbstractModel<
 
     public get keyPath() {
         return this._keyPath;
+    }
+
+    public get parent() {
+        return this._parent
     }
 
     public get store() {
@@ -139,7 +144,18 @@ export abstract class AbstractModel<
         })
     }
 
-    link(keyPath: string, store: Store<any>): () => void {
+    isDescendantOf(ancestor: ModelInterface) {
+        let model: ModelInterface = this
+        while(model.parent !== undefined) {
+            if (model.parent === ancestor) {
+                return true
+            }
+            model = model.parent
+        }
+        return false
+    }
+
+    link(store: Store<any>, parent?: ModelInterface, key?: string): () => void {
         if (this.isDisposed) {
             throw new Error(`Cannot link disposed model '${this.keyPath}'`)
         }
@@ -148,7 +164,13 @@ export abstract class AbstractModel<
             throw new Error(`Model '${this.keyPath}' is already linked`)
         }
 
-        this._keyPath = keyPath
+        if (parent && key) {
+            this._parent = parent
+            this._keyPath = join(parent.keyPath, `/${key}`)
+        } else {
+            this._keyPath = "/"
+        }
+
         this._store = store
         this._isLinked = true
 

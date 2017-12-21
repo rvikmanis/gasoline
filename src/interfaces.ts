@@ -31,11 +31,15 @@ export interface ModelInterface {
   readonly actionCreators: ActionCreatorMap;
   readonly actions: {[K in keyof any]: (...args: any[]) => void };
 
+  readonly parent?: ModelInterface;
+
+  isDescendantOf(ancestor: ModelInterface): boolean;
+
   getStateFromDigest(digest: { [key: string]: any }): any;
   matchActionType(actionType: string): boolean;
   dump(state: any): any;
   load(dump: any, updateContext: UpdateContext<Schema>): any;
-  link(keyPath: string, store: any): () => void;
+  link(store: any, parent?: ModelInterface, key?: string): () => void;
   unlink(): void;
 }
 
