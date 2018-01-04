@@ -2,7 +2,7 @@ import { Observable, Subscription, Subject, BehaviorSubject, Observer } from 'rx
 import { ISubscription } from 'rxjs/Subscription';
 
 import { clone } from '../helpers/clone';
-import { ActionLike } from '../interfaces';
+import { ActionLike, ModelInterface } from '../interfaces';
 import uuid from '../vendor/uuid';
 import { AbstractModel } from './AbstractModel';
 import { ActionsObservable } from './ActionsObservable';
@@ -22,7 +22,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
     private _dispatchDepth: number;
 
     public isStarted: boolean;
-    public digest: { [key: string]: any };
+    public digest: Map<ModelInterface, any>;
     public action$: Observable<ActionLike>;
     public model: M;
 
@@ -34,7 +34,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         this._dispatchDepth = 0;
 
         this.isStarted = false
-        this.digest = {}
+        this.digest = new Map;
         this.action$ = Observable.create((observer: Observer<ActionLike>) => {
             return this._action$
                 .filter(action => action !== undefined)
@@ -200,7 +200,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
     }
 
     private _createUpdateContext(action: ActionLike): UpdateContext<any> {
-        const workingState = { updated: new Set<string>(), digest: clone(this.digest) }
+        const workingState = { updated: new Set<string>(), digest: new Map(this.digest) }
         return new UpdateContext(action, this.model, workingState)
     }
 }

@@ -212,8 +212,8 @@ export abstract class AbstractModel<
         return dump
     }
 
-    getStateFromDigest(digest: { [key: string]: any }): State {
-        return digest[this.keyPath]
+    getStateFromDigest(digest: Map<ModelInterface, any>): State {
+        return digest.get(this)
     }
 
     private _callNowOrWhenDoneLinked(callback: () => void) {

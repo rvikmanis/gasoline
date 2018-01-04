@@ -35,7 +35,7 @@ export interface ModelInterface {
 
   isDescendantOf(ancestor: ModelInterface): boolean;
 
-  getStateFromDigest(digest: { [key: string]: any }): any;
+  getStateFromDigest(digest: Map<ModelInterface, any>): any;
   matchActionType(actionType: string): boolean;
   dump(state: any): any;
   load(dump: any, updateContext: UpdateContext<Schema>): any;

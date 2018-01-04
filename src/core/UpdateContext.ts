@@ -5,12 +5,12 @@ import { mapValues } from "../helpers/mapValues";
 import { matchActionTarget } from "../helpers/matchActionTarget";
 
 export type WorkingState = {
-  digest: { [key: string]: any };
+  digest: Map<ModelInterface, any>;
   updated: Set<string>;
 };
 
 const createEmptyWorkingState = () => (
-  { digest: {}, updated: new Set<string>() }
+  { digest: new Map<ModelInterface, any>(), updated: new Set<string>() }
 )
 
 export class UpdateContext<Dependencies extends Schema, A extends ActionLike = ActionLike> {
@@ -75,7 +75,7 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
   }
 
   public updateDigest(nextState: any) {
-    this.workingState.digest[this.model.keyPath] = nextState
+    this.workingState.digest.set(this.model, nextState)
   }
 
   public markUpdated() {
