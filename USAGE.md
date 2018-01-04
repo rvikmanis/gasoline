@@ -16,15 +16,18 @@
 ```ts
 const counter = new gasoline.Model({
 
-    initialState: 0,
-
-    actionHandlers: {
-        "INCREMENT": state => ++state
-    },
-
     actionCreators: {
         increment() {
             return { type: "INCREMENT" }
+        }
+    },
+    
+    update(state: number = 0, context) {
+        switch (context.action.type) {
+            case "INCREMENT":
+                return state + 1
+            default:
+                return state
         }
     }
 
@@ -36,39 +39,42 @@ const counter = new gasoline.Model({
 ```ts
 const autoIncrement = new gasoline.Model({
 
-    initialState: false,
-
-    actionHandlers: {
-        "TOGGLE_AUTO_INCREMENT": state => !state
-    },
-
     actionCreators: {
         toggle() {
             return { type: "TOGGLE_AUTO_INCREMENT" }
+        }
+    },
+    
+    update(state: boolean = false, context) {
+        switch (context.action.type) {
+            case "TOGGLE_AUTO_INCREMENT":
+                return !state
+            default:
+                return state
         }
     },
 
     process(action$, model) {
         return action$
 
-            // Every time a "TOGGLE_AUTO_INCREMENT" action is dispatched,
-            // and also when the store starts,
-            .ofType("TOGGLE_AUTO_INCREMENT", gasoline.Store.START)
-            .map(() => {
+            // After the store has started, and 
+            // each time TOGGLE_AUTO_INCREMENT is dispatched,
+            .ofType(gasoline.Store.START, "TOGGLE_AUTO_INCREMENT")
+            .switchMap(() => {
 
-                // check if auto increment is enabled: if it is,
-                // return a stream that emits "INCREMENT" actions every second,
+                // check if auto increment is enabled:
                 if (model.state) {
+                    // if it's enabled, start emitting INCREMENT every second
                     const action = counter.actionCreators.increment()
                     return Rx.Observable.interval(1000).mapTo(action)
                 }
 
-                // otherwise return an empty stream.
+                // otherwise emit nothing.
                 return Rx.Observable.empty()
+                
+                // Note: switchMap takes care of subscribing to the latest stream
+                // and disposing of all the previous streams. 
             })
-
-            // Emit only from the latest inner stream.
-            .switch()
     }
 
 });
