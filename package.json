@@ -58,7 +58,7 @@
     "tslint": "^5.4.2",
     "typescript": "2.4",
     "ws": "2.3.1",
-    "zen-observable": "0.5"
+    "zen-observable": "0.7"
   },
   "peerDependencies": {
     "react": "^15.6.1",

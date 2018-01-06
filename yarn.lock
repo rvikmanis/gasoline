@@ -4575,6 +4575,6 @@ yargs@~3.10.0:
     decamelize "^1.0.0"
     window-size "0.1.0"
 
-zen-observable@0.5:
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.5.2.tgz#845a1cfda804a13419ec8ec12343e1f4c45cd07a"
+zen-observable@0.7:
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.7.1.tgz#f84075c0ee085594d3566e1d6454207f126411b3"

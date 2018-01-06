@@ -155,6 +155,12 @@ export abstract class AbstractModel<
         return false
     }
 
+    ready(callback: () => void) {
+        this._callNowOrWhenDoneLinked(() => {
+            this.store.ready(callback)
+        })
+    }
+
     link(store: Store<any>, parent?: ModelInterface, key?: string): () => void {
         if (this.isDisposed) {
             throw new Error(`Cannot link disposed model '${this.keyPath}'`)

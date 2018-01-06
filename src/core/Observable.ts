@@ -8,20 +8,6 @@ function getSymbol(name: string): symbol {
     return hasSymbol(name) ? (Symbol as any)[name] : "@@" + name;
 }
 
-function getMethod(obj: { [key: string]: any }, key: string): Function | undefined {
-    let value = obj[key];
-
-    if (value == null) {
-        return undefined;
-    }
-
-    if (typeof value !== "function") {
-        throw new TypeError(value + " is not a function");
-    }
-
-    return value;
-}
-
 function getSpecies(obj: object) {
     let ctor: Function | undefined = obj.constructor;
     if (ctor !== undefined) {
@@ -60,7 +46,76 @@ export class Observable<T> extends BaseObservable<T> {
     }
 
     flatMap<R>(callback: (value: T) => ZenObservable.ObservableLike<R>): Observable<R> {
-        return super.flatMap(callback) as Observable<R>
+        if (typeof callback !== "function") {
+            throw new TypeError(callback + " is not a function")
+        }
+
+        const C = getSpecies(this) as new (subscriber: ZenObservable.Subscriber<R>) => Observable<R>;
+
+        return new C(observer => {
+            let completed = false;
+            let subscriptions: ZenObservable.Subscription[] = [];
+
+            const closeIfDone = () => {
+                if (completed && subscriptions.length === 0) {
+                    observer.complete();
+                }
+            }
+
+            const outerSubscription = this.subscribe({
+                next(value) {
+                    let inner: ZenObservable.ObservableLike<R>
+
+                    try {
+                        inner = callback(value)
+                    } catch (error) {
+                        observer.error(error)
+                        return
+                    }
+
+                    const innerObserver = {
+                        _sub: undefined,
+
+                        start(subsciption) {
+                            subscriptions.push((this as any)._sub = subsciption)
+                        },
+
+                        next(value) {
+                            observer.next(value)
+                        },
+                        error(e) {
+                            observer.error(e)
+                        },
+
+                        complete() {
+                            let i = subscriptions.indexOf((this as any)._sub);
+
+                            if (i >= 0) {
+                                subscriptions.splice(i, 1);
+                            }
+
+                            closeIfDone();
+                        }
+                    } as ZenObservable.Observer<R>
+
+                    Observable.from(inner).subscribe(innerObserver)
+                },
+
+                error(e) {
+                    return observer.error(e);
+                },
+
+                complete() {
+                    completed = true;
+                    closeIfDone();
+                }
+            })
+
+            return () => {
+                subscriptions.forEach(s => s.unsubscribe());
+                outerSubscription.unsubscribe();
+            };
+        })
     }
 
     mergeMap<R>(callback: (value: T) => ZenObservable.ObservableLike<R>): Observable<R> {
@@ -146,5 +201,111 @@ export class Observable<T> extends BaseObservable<T> {
                 outerSubscription.unsubscribe();
             };
         })
+    }
+
+    share() {
+        const subject = new Subject<T>()
+        this.subscribe(subject)
+        return subject.observable
+    }
+}
+
+function sendMessage<T>(observer: ZenObservable.SubscriptionObserver<T>, message: 'next', value: T): void;
+function sendMessage<T>(observer: ZenObservable.SubscriptionObserver<T>, message: 'error', value?: any): void;
+function sendMessage<T>(observer: ZenObservable.SubscriptionObserver<T>, message: 'complete', value?: void): void;
+function sendMessage<T>(observer: any, message: any, value?: any) {
+    if (observer.closed) {
+        return;
+    }
+    switch (message) {
+        case 'next': return observer.next(value);
+        case 'error': return observer.error(value);
+        case 'complete': return observer.complete();
+    }
+}
+
+export class Subject<T> {
+    protected _observable: Observable<T>;
+    protected _observer?: ZenObservable.SubscriptionObserver<T>;
+    protected _observers?: Set<ZenObservable.SubscriptionObserver<T>>;
+
+    get observable() {
+        return this._observable
+    }
+
+    [Symbol.observable](): Observable<T> {
+        return this.observable
+    }
+
+    protected _addObserver(observer: ZenObservable.SubscriptionObserver<T>) {
+        if (this._observers) {
+            this._observers.add(observer);
+        } else if (!this._observer) {
+            this._observer = observer;
+        } else {
+            this._observers = new Set();
+            this._observers.add(this._observer);
+            this._observers.add(observer);
+            this._observer = undefined;
+        }
+    }
+
+    protected _removeObserver(observer: ZenObservable.SubscriptionObserver<T>) {
+        if (this._observers) {
+            this._observers.delete(observer);
+        } else if (this._observer === observer) {
+            this._observer = undefined;
+        }
+    }
+
+    protected _send(message: 'next', value: T): void;
+    protected _send(message: 'error', value?: any): void;
+    protected _send(message: 'complete', value?: void): void;
+    protected _send(message: any, value?: any) {
+        if (this._observer) {
+            sendMessage(this._observer as ZenObservable.SubscriptionObserver<T>, message, value);
+        } else if (this._observers) {
+            this._observers.forEach(to => { sendMessage(to as ZenObservable.SubscriptionObserver<T>, message, value) });
+        }
+    }
+
+    protected _onSubscribe(observer: ZenObservable.SubscriptionObserver<T>) {
+        this._addObserver(observer)
+        return () => { this._removeObserver(observer) }
+    }
+
+    constructor() {
+        this._observable = new Observable(observer => this._onSubscribe(observer))
+    }
+
+    next(value: T) {
+        this._send("next", value)
+    }
+
+    error(value: any) {
+        this._send("error", value)
+    }
+
+    complete() {
+        this._send("complete")
+    }
+}
+
+export class BehaviorSubject<T> extends Subject<T> {
+    protected _value: T;
+
+    protected _onSubscribe(observer: ZenObservable.SubscriptionObserver<T>) {
+        this._addObserver(observer)
+        observer.next(this._value)
+        return () => { this._removeObserver(observer) }
+    }
+
+    constructor(initialValue: T) {
+        super()
+        this._value = initialValue
+    }
+
+    next(value: T) {
+        this._send("next", this._value = value)
     }
 }
