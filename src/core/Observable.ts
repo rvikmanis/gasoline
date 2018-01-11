@@ -1,4 +1,6 @@
 import BaseObservable from "zen-observable"
+import { ActionLike } from "../interfaces";
+import { matchActionType } from "../helpers/matchActionType";
 
 function hasSymbol(name: string) {
     return typeof Symbol === "function" && Boolean((Symbol as any)[name]);
@@ -16,7 +18,7 @@ function getSpecies(obj: object) {
             ctor = undefined;
         }
     }
-    return ctor !== undefined ? ctor : BaseObservable;
+    return ctor !== undefined ? ctor : Observable;
 }
 
 export class Observable<T> extends BaseObservable<T> {
@@ -26,6 +28,24 @@ export class Observable<T> extends BaseObservable<T> {
 
     static of<R>(...items: R[]): Observable<R> {
         return super.of(...items) as Observable<R>
+    }
+
+    static interval(period: number) {
+        if (typeof period !== "number") {
+            throw new TypeError(period + " is not a number")
+        }
+
+        return new this<number>(observer => {
+            let n = 0
+            const timer = setInterval(() => { observer.next(n++) }, period)
+            return () => {
+                clearInterval(timer)
+            }
+        })
+    }
+
+    static merge<R>(...observables: ZenObservable.ObservableLike<R>[]) {
+        return this.of(...observables).mergeAll()
     }
 
     [Symbol.observable](): Observable<T> {
@@ -43,6 +63,34 @@ export class Observable<T> extends BaseObservable<T> {
     reduce(callback: (previousValue: T, currentValue: T) => T, initialValue?: T): Observable<T>;
     reduce<R>(callback: (previousValue: R, currentValue: T) => R, initialValue?: R): Observable<R> {
         return super.reduce(callback, initialValue) as Observable<R>
+    }
+
+    protected _matchType(actionTypes: string[], matchValue: boolean) {
+        const cache = {};
+
+        return this.filter((action: T & ActionLike) => {
+            if (typeof action !== "object") {
+                return false
+            }
+
+            if (action == null) {
+                return false
+            }
+
+            if (typeof action.type !== "string") {
+                return false
+            }
+
+            return matchValue === matchActionType(actionTypes, action.type, cache)
+        })
+    }
+
+    ofType(...actionTypes: string[]) {
+        return this._matchType(actionTypes, true)
+    }
+
+    notOfType(...actionTypes: string[]) {
+        return this._matchType(actionTypes, false)
     }
 
     flatMap<R>(callback: (value: T) => ZenObservable.ObservableLike<R>): Observable<R> {
@@ -122,20 +170,30 @@ export class Observable<T> extends BaseObservable<T> {
         return this.flatMap(callback) as Observable<R>
     }
 
+    mergeAll<R>(this: Observable<ZenObservable.ObservableLike<R>>): Observable<R> {
+        return this.mergeMap(v => v)
+    }
+
+    merge<R>(other: ZenObservable.ObservableLike<R>): Observable<T | R> {
+        return Observable.merge<T | R>(this, other)
+    }
+
     switchMap<R>(callback: (value: T) => ZenObservable.ObservableLike<R>): Observable<R> {
         if (typeof callback !== "function") {
             throw new TypeError(callback + " is not a function")
         }
 
+        type a = this
+        type b = new () => a
+
         const C = getSpecies(this) as new (subscriber: ZenObservable.Subscriber<R>) => Observable<R>;
 
         return new C(observer => {
             let completed = false;
-            let subscriptions: ZenObservable.Subscription[] = [];
             let innerSubscription: undefined | ZenObservable.Subscription
 
             const closeIfDone = () => {
-                if (completed && subscriptions.length === 0) {
+                if (completed && !innerSubscription) {
                     observer.complete();
                 }
             }
@@ -159,7 +217,7 @@ export class Observable<T> extends BaseObservable<T> {
                         _sub: undefined,
 
                         start(subsciption) {
-                            subscriptions.push((this as any)._sub = subsciption)
+                            innerSubscription = subsciption
                         },
 
                         next(value) {
@@ -170,17 +228,12 @@ export class Observable<T> extends BaseObservable<T> {
                         },
 
                         complete() {
-                            let i = subscriptions.indexOf((this as any)._sub);
-
-                            if (i >= 0) {
-                                subscriptions.splice(i, 1);
-                            }
-
+                            innerSubscription = undefined
                             closeIfDone();
                         }
                     } as ZenObservable.Observer<R>
 
-                    innerSubscription = Observable.from(inner).subscribe(innerObserver)
+                    Observable.from(inner).subscribe(innerObserver)
                 },
 
                 error(e) {
@@ -194,7 +247,6 @@ export class Observable<T> extends BaseObservable<T> {
             })
 
             return () => {
-                subscriptions.forEach(s => s.unsubscribe());
                 if (innerSubscription) {
                     innerSubscription.unsubscribe();
                 }
@@ -203,10 +255,175 @@ export class Observable<T> extends BaseObservable<T> {
         })
     }
 
+    switch<R>(this: Observable<ZenObservable.ObservableLike<R>>) {
+        return this.switchMap(v => v)
+    }
+
+    throttleTime(period: number) {
+        if (typeof period !== "number") {
+            throw new TypeError(period + " is not a number")
+        }
+
+        const C = getSpecies(this) as new (subscriber: ZenObservable.Subscriber<T>) => Observable<T>;
+
+        return new C(observer => {
+            let isOpen = true
+            let timer: any
+
+            const s = this.subscribe({
+                next(value) {
+                    if (isOpen) {
+                        observer.next(value)
+                        isOpen = false
+                        timer = setTimeout(() => { isOpen = true }, period)
+                    }
+                },
+                error(e) { return observer.error(e) },
+                complete() { observer.complete() }
+            })
+
+            return () => {
+                s.unsubscribe()
+                clearTimeout(timer)
+            }
+        })
+    }
+
+    auditTime(period: number) {
+        if (typeof period !== "number") {
+            throw new TypeError(period + " is not a number")
+        }
+
+        const C = getSpecies(this) as new (subscriber: ZenObservable.Subscriber<T>) => Observable<T>;
+
+        return new C(observer => {
+            let isOpen = true
+            let timer: any
+            let value: T
+
+            const s = this.subscribe({
+                next(v) {
+                    value = v
+                    if (isOpen) {
+                        isOpen = false
+                        timer = setTimeout(() => {
+                            observer.next(value)
+                            isOpen = true
+                        }, period)
+                    }
+                },
+                error(e) { return observer.error(e) },
+                complete() { observer.complete() }
+            })
+
+            return () => {
+                s.unsubscribe()
+                clearTimeout(timer)
+            }
+        })
+    }
+
+    take(count: number) {
+        if (typeof count !== "number") {
+            throw new TypeError(count + " is not a number")
+        }
+
+        const C = getSpecies(this) as new (subscriber: ZenObservable.Subscriber<T>) => Observable<T>;
+
+        return new C(observer => {
+            let i = 0
+            return this.subscribe({
+                next(value) {
+                    if (i++ < count) {
+                        observer.next(value)
+                    }
+
+                    if (i >= count) {
+                        observer.complete()
+                    }
+                },
+                error(e) { return observer.error(e) },
+                complete() { observer.complete() }
+            })
+        })
+    }
+
+    skip(count: number) {
+        if (typeof count !== "number") {
+            throw new TypeError(count + " is not a number")
+        }
+
+        const C = getSpecies(this) as new (subscriber: ZenObservable.Subscriber<T>) => Observable<T>;
+
+        return new C(observer => {
+            let i = 0
+            return this.subscribe({
+                next(value) {
+                    if (i++ >= count) {
+                        observer.next(value)
+                    }
+                },
+                error(e) { return observer.error(e) },
+                complete() { observer.complete() }
+            })
+        })
+    }
+
+    takeUntil(notifier: ZenObservable.ObservableLike<any>) {
+        const observableNotifier = Observable.from(notifier)
+
+        const C = getSpecies(this) as new (subscriber: ZenObservable.Subscriber<T>) => Observable<T>;
+
+        return new C(observer => {
+            const notifierSubscription = observableNotifier.take(1).subscribe({
+                next() {
+                    observer.complete()
+                },
+                complete() {
+                    observer.complete()
+                }
+            })
+
+            const subscription = this.subscribe({
+                next(value) { observer.next(value) },
+                error(e) { return observer.error(e) },
+                complete() { observer.complete() }
+            })
+
+            return () => {
+                notifierSubscription.unsubscribe()
+                subscription.unsubscribe()
+            }
+        })
+    }
+
     share() {
-        const subject = new Subject<T>()
-        this.subscribe(subject)
-        return subject.observable
+        const C = getSpecies(this) as new (subscriber: ZenObservable.Subscriber<T>) => Observable<T>;
+        let refCount = 0;
+
+        const subject = new StreamSource<T>()
+        let outerSubscription: ZenObservable.Subscription | undefined;
+
+        return new C(observer => {
+            const innerSubscription = subject.observable.subscribe(observer)
+
+            if (++refCount >= 1) {
+                if (!outerSubscription) {
+                    outerSubscription = this.subscribe(subject)
+                }
+            }
+
+            return () => {
+                if (--refCount < 1) {
+                    if (outerSubscription) {
+                        outerSubscription.unsubscribe()
+                        outerSubscription = undefined
+                    }
+                }
+
+                innerSubscription.unsubscribe()
+            }
+        })
     }
 }
 
@@ -224,7 +441,7 @@ function sendMessage<T>(observer: any, message: any, value?: any) {
     }
 }
 
-export class Subject<T> {
+export class StreamSource<T> {
     protected _observable: Observable<T>;
     protected _observer?: ZenObservable.SubscriptionObserver<T>;
     protected _observers?: Set<ZenObservable.SubscriptionObserver<T>>;
@@ -263,9 +480,9 @@ export class Subject<T> {
     protected _send(message: 'complete', value?: void): void;
     protected _send(message: any, value?: any) {
         if (this._observer) {
-            sendMessage(this._observer as ZenObservable.SubscriptionObserver<T>, message, value);
+            sendMessage(this._observer, message, value);
         } else if (this._observers) {
-            this._observers.forEach(to => { sendMessage(to as ZenObservable.SubscriptionObserver<T>, message, value) });
+            this._observers.forEach(to => { sendMessage(to, message, value) });
         }
     }
 
@@ -291,7 +508,7 @@ export class Subject<T> {
     }
 }
 
-export class BehaviorSubject<T> extends Subject<T> {
+export class ValueSource<T> extends StreamSource<T> {
     protected _value: T;
 
     protected _onSubscribe(observer: ZenObservable.SubscriptionObserver<T>) {
