@@ -1,5 +1,5 @@
-import { Model, Store, CombinedModel } from '../src'
-import { Observable } from "rxjs";
+import { Model, Store, CombinedModel, Observable } from '../src'
+import { Observable as RxObservable } from "rxjs";
 
 const SET_TEXT = 'SET_TEXT'
 const INC = 'INC'
@@ -83,7 +83,7 @@ function setup() {
           return Observable
             .interval(100)
             .take(4)
-            .mapTo(inc())
+            .map(() => inc())
             .takeUntil(action$.ofType('STOP_DELAYED_INC'))
         })
     }
@@ -312,7 +312,7 @@ test('Side effects', () => {
   store.dispatch({ type: 'DELAYED_INC' })
   expect(counter.state).toBe(0)
 
-  return Observable
+  return RxObservable
     .interval(100)
     .map(i => i + 1)
     .do(i => expect(counter.state).toBe(Math.min(i, 4)))
@@ -326,18 +326,18 @@ test('Side effect cancellation', () => {
   store.dispatch({ type: 'DELAYED_INC' })
   expect(counter.state).toBe(0)
 
-  const stop$ = Observable
+  const stop$ = RxObservable
     .of({ type: 'STOP_DELAYED_INC' })
     .delay(250)
     .do(action => store.dispatch(action))
 
-  const assertion$ = Observable
+  const assertion$ = RxObservable
     .interval(100)
     .map(i => i + 1)
     .do(i => expect(counter.state).toBe(Math.min(i, 2)))
     .take(6)
 
-  return Observable
+  return RxObservable
     .merge(stop$, assertion$)
     .toPromise()
 })

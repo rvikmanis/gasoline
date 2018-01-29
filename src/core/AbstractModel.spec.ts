@@ -1,6 +1,6 @@
 import { AbstractModel } from './AbstractModel'
 import { ModelInterface } from "../interfaces";
-import { Observable } from "rxjs";
+import { Observable } from "./Observable";
 
 class ConcreteModel extends AbstractModel<any> {
   update() {}

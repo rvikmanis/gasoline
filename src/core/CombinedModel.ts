@@ -3,11 +3,9 @@ import { ActionLike, ModelInterface, StateOf, Schema } from "../interfaces";
 import { relative, join } from 'path'
 import { UpdateContext } from "./UpdateContext";
 import { AbstractModel } from "./AbstractModel";
-import { Observable, Observer } from 'rxjs';
-import { ActionsObservable } from "./ActionsObservable";
+import { Observable } from './Observable';
 import { Store } from "./Store";
 import Toposort from 'toposort-class'
-import { Subscribable } from "rxjs/Observable";
 
 export class CombinedModel<Children extends Schema> extends AbstractModel<StateOf<Children>> {
   public children: Map<keyof Children, Children[keyof Children]>;
@@ -78,23 +76,21 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     return this.update(state, updateContext.setModel(this))
   }
 
-  process(action$: ActionsObservable) {
-    const onSubscribe = (observer: Observer<Subscribable<ActionLike>>) => {
-      for (const model of this.children.values()) {
-        let a$ = action$.filter(action => {
-          return matchActionTarget(model.keyPath, action.target)
-        }) as ActionsObservable
-
-        if (model.accept) {
-          a$ = a$.ofType(Store.START, Store.STOP, ...model.accept)
-        }
-
-        observer.next(model.process(a$, model))
-      }
-    }
-
+  process(action$: Observable<ActionLike>) {
     return (
-      Observable.create(onSubscribe) as Observable<Subscribable<ActionLike>>
+      new Observable<ZenObservable.ObservableLike<ActionLike>>((observer) => {
+        for (const model of this.children.values()) {
+          let a$ = action$.filter(action => {
+            return matchActionTarget(model.keyPath, action.target)
+          })
+
+          if (model.accept) {
+            a$ = a$.ofType(Store.START, Store.STOP, ...model.accept)
+          }
+
+          observer.next(model.process(a$, model))
+        }
+      })
     ).mergeAll()
   }
 

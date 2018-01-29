@@ -1,7 +1,6 @@
 export * from './interfaces'
 export * from './core/Store'
 export * from './core/UpdateContext'
-export * from './core/ActionsObservable'
 export * from './core/AbstractModel'
 export * from './core/Model'
 export * from './core/CombinedModel'

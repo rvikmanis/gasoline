@@ -1,7 +1,6 @@
 import { UpdateContext } from './core/UpdateContext'
-import { Subscribable } from 'rxjs/Observable'
 import { Store } from "./core/Store";
-import { ActionsObservable } from "./core/ActionsObservable";
+import { Observable } from "./core/Observable";
 
 export interface ActionLike<T extends string = string> {
   type: T;
@@ -33,6 +32,8 @@ export interface ModelInterface {
 
   readonly parent?: ModelInterface;
 
+  readonly state$: Observable<any>;
+
   isDescendantOf(ancestor: ModelInterface): boolean;
   ready(callback: () => void): void;
   getStateFromDigest(digest: Map<ModelInterface, any>): any;
@@ -48,7 +49,7 @@ export interface Reducer<S, D extends Schema> {
 }
 
 export interface Epic<Model extends ModelInterface> {
-  (action$: ActionsObservable, model: Model): Subscribable<ActionLike>
+  (action$: Observable<ActionLike>, model: Model): ZenObservable.ObservableLike<ActionLike>
 }
 
 export type Schema = { [key: string]: ModelInterface }

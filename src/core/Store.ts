@@ -1,12 +1,24 @@
-import { Observable, Subscription, Subject, BehaviorSubject, Observer } from 'rxjs';
-import { ISubscription } from 'rxjs/Subscription';
-
 import { clone } from '../helpers/clone';
 import { ActionLike, ModelInterface } from '../interfaces';
 import uuid from '../vendor/uuid';
 import { AbstractModel } from './AbstractModel';
-import { ActionsObservable } from './ActionsObservable';
 import { UpdateContext } from './UpdateContext';
+import { StreamSource, ValueSource, Observable } from "./Observable"
+
+class MultiSubscription {
+    protected _subscriptions: Set<ZenObservable.Subscription> = new Set();
+
+    add(sub: ZenObservable.Subscription) {
+        this._subscriptions.add(sub)
+    }
+
+    unsubscribe() {
+        for (const sub of this._subscriptions) {
+            sub.unsubscribe();
+        }
+        this._subscriptions.clear();
+    }
+}
 
 export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
     static START = 'gasoline.Store.START'
@@ -14,10 +26,10 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
     static LOAD = 'gasoline.Store.LOAD'
 
     private _lastUpdateContext?: UpdateContext<any>;
-    private _subscription?: Subscription;
+    private _subscription?: MultiSubscription;
     private _listeners: { [key: string]: (() => void)[] };
-    private _input$: Subject<ActionLike>;
-    private _action$: BehaviorSubject<ActionLike | undefined>;
+    private _input$: StreamSource<ActionLike>;
+    private _action$: ValueSource<ActionLike | undefined>;
     private _bufferedUpdates: Set<string>;
     private _dispatchDepth: number;
 
@@ -28,15 +40,15 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
 
     constructor(model: M) {
         this._listeners = {}
-        this._input$ = new Subject<ActionLike>()
-        this._action$ = new BehaviorSubject<ActionLike | undefined>(undefined)
+        this._input$ = new StreamSource<ActionLike>()
+        this._action$ = new ValueSource<ActionLike | undefined>(undefined)
         this._bufferedUpdates = new Set();
         this._dispatchDepth = 0;
 
         this.isStarted = false
         this.digest = new Map;
-        this.action$ = Observable.create((observer: Observer<ActionLike>) => {
-            return this._action$
+        this.action$ = new Observable((observer) => {
+            return this._action$.observable
                 .filter(action => action !== undefined)
                 .subscribe(observer)
         })
@@ -52,20 +64,22 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         }
         this.isStarted = true
 
-        let action$ = ActionsObservable.from(this._input$)
+        let action$ = Observable.from(this._input$)
         if (this.model.accept) {
             action$ = action$.ofType(Store.START, Store.STOP, ...this.model.accept)
         }
-        action$ = action$.share() as ActionsObservable
+        action$ = action$.share()
 
-        this._subscription = action$.subscribe(action => {
+        this._subscription = new MultiSubscription();
+
+        this._subscription.add(action$.subscribe(action => {
             this._action$.next(action)
-        })
+        }))
 
         this._subscription.add(
             Observable
                 .from(this.model.process(action$, this.model))
-                .subscribe(action => { this.dispatch(action) })
+                .subscribe(action => { this.dispatch(action); return () => undefined; })
         )
         this._dispatch({ type: Store.START })
         this._invokeListeners("started")

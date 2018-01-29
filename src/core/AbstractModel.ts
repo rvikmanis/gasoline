@@ -1,7 +1,6 @@
 import { createActionTarget } from '../helpers/createActionTarget';
 import { dirname, resolve, join } from 'path';
-import { Observable, Observer, Subscription } from 'rxjs';
-
+import { Observable } from "./Observable";
 import { mapValues } from '../helpers/mapValues';
 import { matchActionType } from '../helpers/matchActionType';
 import {
@@ -13,8 +12,6 @@ import {
 import { Store } from './Store';
 import { UpdateContext } from './UpdateContext';
 import { clone } from "../helpers/clone";
-import { ActionsObservable } from "./ActionsObservable";
-import { Subscribable } from "rxjs/Observable";
 
 type Deferred<T> = {
     promise: Promise<T>,
@@ -35,7 +32,6 @@ export abstract class AbstractModel<
     Dependencies extends Schema = {}
 > implements ModelInterface {
     // Core internals
-    private _allSubscriptions: Subscription;
     private _whenLinked: Deferred<void>;
     private _actionTypeMatchCache: { [key: string]: boolean };
     private _keyPath: string;
@@ -48,7 +44,7 @@ export abstract class AbstractModel<
 
     // Options internals
     abstract update(state: State | undefined, updateContext: UpdateContext<Dependencies>): State;
-    abstract process(action$: ActionsObservable, model: this): Subscribable<ActionLike>;
+    abstract process(action$: Observable<ActionLike>, model: this): ZenObservable.ObservableLike<ActionLike>;
     protected _dependencies: Dependencies;
     protected _actionCreators: ActionCreators;
     protected _accept?: string[];
@@ -119,7 +115,6 @@ export abstract class AbstractModel<
             throw new TypeError('Cannot instantiate abstract class AbstractModel')
         }
 
-        this._allSubscriptions = new Subscription
         this._whenLinked = createDeferred()
         this._actionTypeMatchCache = {}
         this._isLinked = false
@@ -128,19 +123,15 @@ export abstract class AbstractModel<
         this._actionCreators = {} as ActionCreators
         this._dependencies = {} as Dependencies
 
-        this.state$ = Observable.create((observer: Observer<State>) => {
+        this.state$ = new Observable((observer) => {
             if (this.isDisposed) {
                 observer.error(`Cannot subscribe to disposed model: ${this.keyPath}`)
                 return
             }
 
-            const cancel = this._listenState(state => {
+            return this._listenState(state => {
                 observer.next(state)
-            })
-
-            this._allSubscriptions.add(cancel)
-
-            return cancel;
+            });
         })
     }
 
@@ -197,8 +188,6 @@ export abstract class AbstractModel<
         delete this._store
         this._isLinked = false
         this._isDisposed = true
-
-        this._allSubscriptions.unsubscribe();
     }
 
     matchActionType(actionType: string) {

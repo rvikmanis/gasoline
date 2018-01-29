@@ -26,17 +26,17 @@ class TextModel<Dependencies extends gasoline.Schema = {}> extends gasoline.Abst
         }
     }
 
-    process(action$: gasoline.ActionsObservable, model: this) {
+    process(action$: gasoline.Observable<gasoline.ActionLike>, model: this) {
         if (this.proxySetValue) {
             return action$.ofType("SET_VALUE").switchMap(action => {
                 const out = this.proxySetValue(action)
                 if (out === undefined) {
-                    return Observable.empty()
+                    return gasoline.Observable.empty()
                 }
-                return Observable.of(out) as Observable<gasoline.ActionLike>
+                return gasoline.Observable.of(out) as gasoline.Observable<gasoline.ActionLike>
             })
         }
-        return Observable.empty()
+        return gasoline.Observable.empty()
     }
 
     constructor(options: {
@@ -89,7 +89,7 @@ test("Generic models", () => {
     const lastName = new TextModel()
     const store = new gasoline.Store(gasoline.combineModels({ firstName, lastName }))
 
-    const promise = store.action$.map(action => {
+    const promise = Observable.from(store.action$).map(action => {
         const { meta, ...dup } = action
         return { ...dup, ts: meta.dispatch.time }
     }).bufferCount(3).take(1).do(actions => {
@@ -125,12 +125,16 @@ test("Side effect scheduling", () => {
     })
     const periodical = new gasoline.Model({
         process(action$) {
-            return action$.ofType(gasoline.Store.START).mergeMapTo(Observable.timer(250, 250).map((n) => {
+            const rxObs$ = Observable.from(action$.ofType(gasoline.Store.START)).mergeMapTo(Observable.timer(250, 250).map((n) => {
                 if (n === 2) {
                     return derivedText.actionCreators.setValue(derivedText.state + " haZARD," + String(n))
                 }
                 return sourceText.actionCreators.setValue(sourceText.state.split(",")[0] + "," + String(n))
             })).observeOn(Scheduler.async)
+
+            return new gasoline.Observable(observer => {
+                return rxObs$.subscribe(observer);
+            })
         }
     })
 
@@ -144,7 +148,7 @@ test("Side effect scheduling", () => {
         })
     })
 
-    const promise = store.action$.map(action => {
+    const promise = Observable.from(store.action$).map(action => {
         const { meta, ...dup } = action
         return { ...dup, ts: meta.dispatch.time }
     }).buffer(Observable.timer(2000)).take(1).do(buf => {

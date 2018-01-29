@@ -1,7 +1,7 @@
 import { CombinedModel } from './CombinedModel'
 import { AbstractModel } from './AbstractModel'
 import { ModelInterface } from "../interfaces";
-import { Observable } from "rxjs";
+import { Observable } from "./Observable";
 
 class FakeModel extends AbstractModel<any> {
   process() { return Observable.empty() }

@@ -1,9 +1,7 @@
 import { ActionCreatorMap, ModelInterface, ActionLike, Epic, Reducer, Schema } from '../interfaces';
 import { AbstractModel } from './AbstractModel';
 import { UpdateContext } from "./UpdateContext";
-import { Observable } from "rxjs";
-import { Subscribable } from "rxjs/Observable"
-import { ActionsObservable } from "./ActionsObservable";
+import { Observable } from "./Observable";
 
 export interface ModelOptions<
     State,
@@ -28,8 +26,8 @@ export class Model<
         return state
     }
 
-    process(action$: ActionsObservable, model: this) {
-        return Observable.empty() as Subscribable<ActionLike>
+    process(action$: Observable<ActionLike>, model: this) {
+        return Observable.empty<ActionLike>() as ZenObservable.ObservableLike<ActionLike>
     }
 
     constructor(options: ModelOptions<State, ActionCreators, Dependencies>) {

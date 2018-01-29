@@ -30,6 +30,12 @@ export class Observable<T> extends BaseObservable<T> {
         return super.of(...items) as Observable<R>
     }
 
+    static empty<T>() {
+        return new this<T>(observer => {
+            observer.complete();
+        })
+    }
+
     static interval(period: number) {
         if (typeof period !== "number") {
             throw new TypeError(period + " is not a number")
