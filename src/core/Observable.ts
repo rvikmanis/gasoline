@@ -67,8 +67,9 @@ export class Observable<T> extends BaseObservable<T> {
     }
 
     reduce(callback: (previousValue: T, currentValue: T) => T, initialValue?: T): Observable<T>;
-    reduce<R>(callback: (previousValue: R, currentValue: T) => R, initialValue?: R): Observable<R> {
-        return super.reduce(callback, initialValue) as Observable<R>
+    reduce<R>(callback: (previousValue: R, currentValue: T) => R, initialValue?: R): Observable<R>;
+    reduce(callback: (...args: any[]) => any, initialValue?: any): Observable<any> {
+        return super.reduce(callback, initialValue) as Observable<any>
     }
 
     protected _matchType(actionTypes: string[], matchValue: boolean) {
