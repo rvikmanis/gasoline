@@ -1,5 +1,5 @@
 import { clone } from '../helpers/clone';
-import { ActionLike, ModelInterface } from '../interfaces';
+import { ActionLike, ModelInterface, InputAction } from '../interfaces';
 import uuid from '../vendor/uuid';
 import { AbstractModel } from './AbstractModel';
 import { UpdateContext } from './UpdateContext';
@@ -79,7 +79,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         this._subscription.add(
             Observable
                 .from(this.model.process(action$, this.model))
-                .subscribe(action => { this.dispatch(action); return () => undefined; })
+                .subscribe(action => { this.dispatch(action) })
         )
         this._dispatch({ type: Store.START })
         this._invokeListeners("started")
@@ -109,7 +109,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         })
     }
 
-    dispatch = (input: ActionLike) => {
+    dispatch = (input: InputAction) => {
         if ([Store.START, Store.STOP, Store.LOAD].indexOf(input.type) > -1) {
             throw new Error(`Cannot dispatch lifecycle action '${input.type}'`);
         }
@@ -132,6 +132,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
     }
 
     listen(eventName: string, listener: () => void) {
+        // TODO: improve performance
         const wrapper = () => { listener() }
         this._listeners[eventName] = (this._listeners[eventName] || []).concat(wrapper)
         return () => {
@@ -157,7 +158,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
         onLinked();
     }
 
-    private _dispatch(input: ActionLike) {
+    private _dispatch(input: InputAction) {
         if (!this.isStarted) {
             throw new Error('Cannot dispatch before store is started. Call the start() method on your store')
         }
@@ -171,7 +172,24 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
             }
         }
 
-        const action = { ...input, meta }
+        let target: string | string[] | undefined;
+
+        if (input.target) {
+            if (typeof input.target === "string") {
+                target = input.target;
+            } else if (Array.isArray(input.target)) {
+                target = Array.prototype.map.call(
+                    input.target,
+                    (t: string | ModelInterface) => (typeof t === "string")
+                        ? t
+                        : t.keyPath
+                )
+            } else if ("keyPath" in input.target) {
+                target = input.target.keyPath;
+            }
+        }
+
+        const action = { ...input, target, meta }
         const ctx = this._createUpdateContext(action)
         const state = this.model.update(this.model.state, ctx)
         this._saveDigest(state, ctx)

@@ -86,16 +86,7 @@ export abstract class AbstractModel<
     }
 
     public get actionCreators() {
-        if (!this._linkedActionCreators) {
-            this._linkedActionCreators = mapValues(this._actionCreators, (actionCreator) => {
-                return (...args: any[]) => {
-                    const action = clone(actionCreator(...args))
-                    action.target = createActionTarget(this.keyPath, action.target)
-                    return action
-                }
-            })
-        }
-        return this._linkedActionCreators
+        return this._actionCreators;
     }
 
     public get actions() {

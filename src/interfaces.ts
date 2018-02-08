@@ -2,15 +2,19 @@ import { UpdateContext } from './core/UpdateContext'
 import { Store } from "./core/Store";
 import { Observable } from "./core/Observable";
 
-export interface ActionLike<T extends string = string> {
+export interface InputAction<T extends string = string> {
   type: T;
-  target?: string | string[];
+  target?: string | string[] | ModelInterface | ModelInterface[];
   meta?: { [key: string]: any };
   payload?: any;
 }
 
+export interface ActionLike<T extends string = string> extends InputAction<T> {
+  target?: string | string[];
+}
+
 export interface ActionCreator {
-  (...args: any[]): ActionLike
+  (...args: any[]): InputAction
 }
 export type ActionCreatorMap = { [key: string]: ActionCreator }
 
@@ -49,7 +53,7 @@ export interface Reducer<S, D extends Schema> {
 }
 
 export interface Epic<Model extends ModelInterface> {
-  (action$: Observable<ActionLike>, model: Model): ZenObservable.ObservableLike<ActionLike>
+  (action$: Observable<ActionLike>, model: Model): ZenObservable.ObservableLike<InputAction>
 }
 
 export type Schema = { [key: string]: ModelInterface }

@@ -2,10 +2,10 @@ import { Scheduler } from 'rxjs';
 import { Observable } from 'rxjs';
 import * as gasoline from '../src';
 
-type ProxySetValue = (action: gasoline.ActionLike) => gasoline.ActionLike | void
+type ProxySetValue = (action: gasoline.InputAction) => gasoline.InputAction | void
 type GetValue<Dependencies, State> = (dependencies: gasoline.UpdateContext<Dependencies>["dependencies"]) => State
 type ActionCreators = {
-    setValue(payload: string): gasoline.ActionLike
+    setValue(payload: string): gasoline.InputAction
 }
 
 class TextModel<Dependencies extends gasoline.Schema = {}> extends gasoline.AbstractModel<string, ActionCreators, Dependencies> {
@@ -31,9 +31,9 @@ class TextModel<Dependencies extends gasoline.Schema = {}> extends gasoline.Abst
             return action$.ofType("SET_VALUE").switchMap(action => {
                 const out = this.proxySetValue(action)
                 if (out === undefined) {
-                    return gasoline.Observable.empty()
+                    return gasoline.Observable.empty<gasoline.InputAction>()
                 }
-                return gasoline.Observable.of(out) as gasoline.Observable<gasoline.ActionLike>
+                return gasoline.Observable.of(out as gasoline.InputAction)
             })
         }
         return gasoline.Observable.empty()
@@ -67,7 +67,7 @@ class TextModel<Dependencies extends gasoline.Schema = {}> extends gasoline.Abst
 
         this._actionCreators = {
             setValue: (payload: string) => {
-                return { type: "SET_VALUE", target: "@self", payload }
+                return { type: "SET_VALUE", target: this, payload }
             }
         }
 
