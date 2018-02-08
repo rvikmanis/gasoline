@@ -4,8 +4,9 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "node fuse",
-    "dist": "node fuse dist",
+    "reset": "rm -rf node_modules && rm -rf .fusebox",
+    "start": "yarn reset && yarn && node fuse",
+    "dist": "yarn reset && yarn && node fuse dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
