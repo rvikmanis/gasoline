@@ -11,7 +11,6 @@ import {
 } from '../interfaces';
 import { Store } from './Store';
 import { UpdateContext } from './UpdateContext';
-import { clone } from "../helpers/clone";
 
 type Deferred<T> = {
     promise: Promise<T>,

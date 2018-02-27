@@ -1,4 +1,3 @@
-import { clone } from '../helpers/clone';
 import { ActionLike, ModelInterface, InputAction } from '../interfaces';
 import uuid from '../vendor/uuid';
 import { AbstractModel } from './AbstractModel';
