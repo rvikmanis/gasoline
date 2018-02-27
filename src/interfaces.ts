@@ -29,7 +29,6 @@ export interface ModelInterface {
   readonly keyPath: string;
   readonly store: Store<any>;
   readonly isLinked: boolean;
-  readonly isDisposed: boolean;
 
   readonly actionCreators: ActionCreatorMap;
   readonly actions: {[K in keyof any]: (...args: any[]) => void };

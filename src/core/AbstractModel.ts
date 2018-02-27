@@ -39,7 +39,6 @@ export abstract class AbstractModel<
     private _actionTypeMatchCache: { [key: string]: boolean };
     private _keyPath: string;
     private _store: Store;
-    private _isDisposed: boolean;
     private _isLinked: boolean;
     private _linkedActionCreators: ActionCreators;
     private _actions: {[K in keyof ActionCreators]: (...args: any[]) => void };
@@ -69,10 +68,6 @@ export abstract class AbstractModel<
 
     public get isLinked() {
         return this._isLinked;
-    }
-
-    public get isDisposed() {
-        return this._isDisposed;
     }
 
     public get state(): State {
@@ -112,17 +107,11 @@ export abstract class AbstractModel<
         this._whenLinked = createDeferred()
         this._actionTypeMatchCache = {}
         this._isLinked = false
-        this._isDisposed = false
 
         this._actionCreators = {} as ActionCreators
         this._dependencies = {} as Dependencies
 
         this.state$ = new Observable((observer) => {
-            if (this.isDisposed) {
-                observer.error(`Cannot subscribe to disposed model: ${this.keyPath}`)
-                return
-            }
-
             return this._listenState(state => {
                 observer.next(state)
             });
@@ -147,10 +136,6 @@ export abstract class AbstractModel<
     }
 
     link(store: Store<any>, parent?: ModelInterface, key?: string): () => void {
-        if (this.isDisposed) {
-            throw new Error(`Cannot link disposed model '${this.keyPath}'`)
-        }
-
         if (this.isLinked) {
             throw new Error(`Model '${this.keyPath}' is already linked`)
         }
@@ -171,17 +156,15 @@ export abstract class AbstractModel<
     }
 
     unlink() {
-        if (this.isDisposed) {
-            throw new Error(`Cannot dispose already disposed model '${this.keyPath}'`)
-        }
-
         if (!this.isLinked) {
             throw new Error(`Model '${this.keyPath}' is not linked`)
         }
 
         delete this._store
+        delete this._keyPath
+        delete this._parent
         this._isLinked = false
-        this._isDisposed = true
+        this._whenLinked = createDeferred()
     }
 
     matchActionType(actionType: string) {
@@ -212,10 +195,6 @@ export abstract class AbstractModel<
         }
 
         this._whenLinked.promise.then(() => {
-            if (this.isDisposed) {
-                console.warn(`whenLinked callback failed to run: Model '${this.keyPath}' is disposed`)
-                return;
-            }
             callback();
         })
     }
