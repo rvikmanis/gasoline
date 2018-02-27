@@ -5,7 +5,7 @@
   "scripts": {
     "test": "tsc --noemit && jest --verbose",
     "b:_clean": "rm -rf ./build ./dist",
-    "b:_build": "tsc && cp -R ./src/vendor ./build/step-1 && rollup -c",
+    "b:_build": "tsc && rollup -c",
     "b:_minify": "babili --source-maps=true -o build/step-2/gasoline.min.js build/step-2/gasoline.js",
     "b:_dist": "cp -R ./build/step-2 ./dist && cp -R ./build/typings ./dist/typings",
     "b:_remove_build_dir": "rm -rf ./build",

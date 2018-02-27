@@ -1,5 +1,4 @@
 import { ActionLike, ModelInterface, InputAction } from '../interfaces';
-import uuid from '../vendor/uuid';
 import { AbstractModel } from './AbstractModel';
 import { UpdateContext } from './UpdateContext';
 import { StreamSource, ValueSource, Observable } from "./Observable"
@@ -166,7 +165,6 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
 
         const meta = {
             dispatch: {
-                id: uuid(),
                 time: Date.now()
             }
         }
