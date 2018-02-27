@@ -1,5 +1,4 @@
-import { createActionTarget } from '../helpers/createActionTarget';
-import { dirname, resolve, join } from 'path';
+import { join } from 'path';
 import { Observable } from "./Observable";
 import { mapValues } from '../helpers/mapValues';
 import { matchActionType } from '../helpers/matchActionType';
@@ -26,12 +25,16 @@ function createDeferred<T>() {
     return deferred
 }
 
+/**
+ * The abstract model.
+ */
 export abstract class AbstractModel<
     State,
     ActionCreators extends ActionCreatorMap = {},
     Dependencies extends Schema = {}
 > implements ModelInterface {
     // Core internals
+    /** A deferred that must be resolved when the model is linked */
     private _whenLinked: Deferred<void>;
     private _actionTypeMatchCache: { [key: string]: boolean };
     private _keyPath: string;

@@ -2,15 +2,15 @@ import { ComponentType, ComponentClass, Component, createElement } from "react"
 import shallowEquals from "shallow-equals";
 import { ModelInterface } from "../interfaces";
 
-function connect<M extends ModelInterface, S = M["state"], A = M["actions"]>(
+function connect<M extends ModelInterface>(
     model: M
-): (component: ComponentType<{ state: S, actions: A }>) => ComponentClass<{}> {
-    return (component: ComponentType<{ state: S, actions: A }>) => {
-        return class extends Component {
+) {
+    return <P = {}>(component: ComponentType<P>) => {
+        return class extends Component<P> {
             static displayName = component.displayName;
 
             subscription: ZenObservable.Subscription;
-            sourceState: S;
+            sourceState: any;
 
             componentWillMount() {
                 this.sourceState = model.state
@@ -29,14 +29,14 @@ function connect<M extends ModelInterface, S = M["state"], A = M["actions"]>(
                 this.subscription.unsubscribe()
             }
 
-            shouldComponentUpdate(nextProps: any) {
+            shouldComponentUpdate(nextProps: P) {
                 return !shallowEquals(nextProps, this.props)
             }
 
             render() {
                 return createElement(
                     component as any,
-                    { state: this.sourceState, actions: model.actions }
+                    this.props
                 )
             }
         }

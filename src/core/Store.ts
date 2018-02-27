@@ -184,7 +184,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
                         ? t
                         : t.keyPath
                 )
-            } else if ("keyPath" in input.target) {
+            } else {
                 target = input.target.keyPath;
             }
         }

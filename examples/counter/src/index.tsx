@@ -80,15 +80,16 @@ const textField = new Model({
       state = context.action.payload
     }
 
-    state = context.dependencies.counter % 2 === 0
+    state = context.dependencies.counter % 100 === 0
       ? state.toUpperCase()
       : state.toLowerCase()
 
     return state
   },
   process(action$, model) {
-    return action$.ofType("SET_VALUE").map(() => {
-      return counter.actionCreators.increment()
+    return action$.ofType("SET_VALUE").mergeMap(() => {
+      const i = counter.actionCreators.increment();
+      return Observable.of(i, i)
     })
   },
   actionCreators: {
