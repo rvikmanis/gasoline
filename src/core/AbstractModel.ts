@@ -7,6 +7,7 @@ import {
     ActionLike,
     ModelInterface,
     Schema,
+    InputAction,
 } from '../interfaces';
 import { Store } from './Store';
 import { UpdateContext } from './UpdateContext';
@@ -46,7 +47,7 @@ export abstract class AbstractModel<
 
     // Options internals
     abstract update(state: State | undefined, updateContext: UpdateContext<Dependencies>): State;
-    abstract process(action$: Observable<ActionLike>, model: this): ZenObservable.ObservableLike<ActionLike>;
+    abstract process(action$: Observable<ActionLike>, model: this): ZenObservable.ObservableLike<InputAction>;
     protected _dependencies: Dependencies;
     protected _actionCreators: ActionCreators;
     protected _accept?: string[];
