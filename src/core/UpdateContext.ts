@@ -9,10 +9,6 @@ export type WorkingState = {
   updated: Set<string>;
 };
 
-const createEmptyWorkingState = () => (
-  { digest: new Map<ModelInterface, any>(), updated: new Set<string>() }
-)
-
 export class UpdateContext<Dependencies extends Schema, A extends ActionLike = ActionLike> {
   public readonly action: A;
   public model: ModelInterface;
@@ -37,7 +33,10 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
   constructor(action: A, initialModel: ModelInterface, initialWorkingState?: WorkingState) {
     this.action = action
     if (initialWorkingState === undefined) {
-      initialWorkingState = createEmptyWorkingState()
+      initialWorkingState = {
+        digest: new Map<ModelInterface, any>(),
+        updated: new Set<string>()
+      }
     }
     this.workingState = initialWorkingState
     this.setModel(initialModel)
