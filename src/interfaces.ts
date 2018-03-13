@@ -13,8 +13,8 @@ export interface ActionLike<T extends string = string> extends InputAction<T> {
   target?: string | string[];
 }
 
-export interface ActionCreator {
-  (...args: any[]): InputAction
+export interface ActionCreator<T extends string = string> {
+  (...args: any[]): InputAction<T>
 }
 export type ActionCreatorMap = { [key: string]: ActionCreator }
 
@@ -36,10 +36,11 @@ export interface ModelInterface {
   readonly parent?: ModelInterface;
 
   readonly state$: Observable<any>;
+  readonly resultNode: any;
 
   isDescendantOf(ancestor: ModelInterface): boolean;
   ready(callback: () => void): void;
-  getStateFromDigest(digest: Map<ModelInterface, any>): any;
+  getStateFromDigest(digest: Map<string, any>): any;
   matchActionType(actionType: string): boolean;
   dump(state: any): any;
   load(dump: any, updateContext: UpdateContext<Schema>): any;

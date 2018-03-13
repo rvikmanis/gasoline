@@ -7,7 +7,7 @@ export class Model<
   State = void,
   ActionCreators extends ActionCreatorMap = {},
   Dependencies extends Schema = {}
-> extends AbstractModel<State, ActionCreators, Dependencies> {
+> extends AbstractModel<State> {
   update(state: State, context: UpdateContext<Dependencies>) {
     return state
   }

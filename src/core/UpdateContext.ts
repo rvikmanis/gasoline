@@ -5,7 +5,7 @@ import { mapValues } from "../helpers/mapValues";
 import { matchActionTarget } from "../helpers/matchActionTarget";
 
 export type WorkingState = {
-  digest: Map<ModelInterface, any>;
+  digest: Map<string, any>;
   updated: Set<string>;
 };
 
@@ -13,6 +13,12 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
   public readonly action: A;
   public model: ModelInterface;
   public workingState: WorkingState;
+  private _modelData: Map<ModelInterface, {
+    shouldUpdate: boolean,
+    actionDoesMatch: boolean,
+    dependenciesHaveChanged: boolean,
+    _dependencies: any
+  }>
 
   public shouldUpdate: boolean;
   public actionDoesMatch: boolean;
@@ -34,15 +40,16 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
     this.action = action
     if (initialWorkingState === undefined) {
       initialWorkingState = {
-        digest: new Map<ModelInterface, any>(),
+        digest: new Map<string, any>(),
         updated: new Set<string>()
       }
     }
     this.workingState = initialWorkingState
+    this._modelData = new Map();
     this.setModel(initialModel)
   }
 
-  public compute() {
+  private _compute() {
     this._dependencies = undefined
 
     const actionTargetMatches = matchActionTarget(this.model.keyPath, this.action.target)
@@ -69,12 +76,22 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
 
   public setModel<Model extends ModelInterface>(model: Model) {
     this.model = model
-    this.compute()
+    if (this._modelData.has(model)) {
+      Object.assign(this, this._modelData.get(model));
+    } else {
+      this._compute()
+      this._modelData.set(model, {
+        shouldUpdate: this.shouldUpdate,
+        actionDoesMatch: this.actionDoesMatch,
+        dependenciesHaveChanged: this.dependenciesHaveChanged,
+        _dependencies: this._dependencies
+      })
+    }
     return this as UpdateContext<Model['dependencies'], A>
   }
 
   public updateDigest(nextState: any) {
-    this.workingState.digest.set(this.model, nextState)
+    this.workingState.digest.set(this.model.keyPath, nextState)
   }
 
   public markUpdated() {

@@ -26,67 +26,45 @@ function createDeferred<T>() {
 }
 
 /**
- * The abstract model.
+ * Abstract base for models.
+ *
+ * Extend this to create custom model classes.
  */
 export abstract class AbstractModel<
     State,
     ActionCreators extends ActionCreatorMap = {},
     Dependencies extends Schema = {}
 > implements ModelInterface {
-    // Core internals
+
+    // ====
+    // Core
+    // ====
+
     /** A deferred that must be resolved when the model is linked */
     private _whenLinked: Deferred<void>;
+
+    /** Cache used in `matchActionType` */
     private _actionTypeMatchCache: { [key: string]: boolean };
-    private _keyPath: string;
-    private _store: Store;
-    private _isLinked: boolean;
-    private _linkedActionCreators: ActionCreators;
-    private _actions: {[K in keyof ActionCreators]: (...args: any[]) => void };
-    private _parent?: ModelInterface;
 
-    // Options internals
-    abstract update(state: State | undefined, updateContext: UpdateContext<Dependencies>): State;
-    abstract process(action$: Observable<ActionLike>, model: this): ZenObservable.ObservableLike<InputAction>;
-    protected _dependencies: Dependencies;
-    protected _actionCreators: ActionCreators;
-    protected _accept?: string[];
-
-    // Core API
-    public readonly state$: Observable<State>;
-
+    /** Full primary key identifying the model instance within the store */
     public get keyPath() {
         return this._keyPath;
     }
+    private _keyPath: string;
 
-    public get parent() {
-        return this._parent
-    }
-
+    /** The linked store */
     public get store() {
         return this._store;
     }
+    private _store: Store;
 
+    /** A flag indicating if the model is linked to a store */
     public get isLinked() {
         return this._isLinked;
     }
+    private _isLinked: boolean;
 
-    public get state(): State {
-        return this.getStateFromDigest(this.store.digest)
-    }
-
-    // Options API
-    public get dependencies() {
-        return this._dependencies;
-    }
-
-    public get accept() {
-        return this._accept;
-    }
-
-    public get actionCreators() {
-        return this._actionCreators;
-    }
-
+    /** Bound action creators */
     public get actions() {
         if (!this._actions) {
             this._actions = mapValues(this.actionCreators, actionCreator => {
@@ -97,8 +75,72 @@ export abstract class AbstractModel<
         }
         return this._actions
     }
+    private _actions: {[K in keyof ActionCreators]: (...args: any[]) => void };
 
+    /** Parent model in the state tree */
+    public get parent() {
+        return this._parent
+    }
+    private _parent?: ModelInterface;
+
+    /** Observable of the model's state in the store */
+    public readonly state$: Observable<State>;
+
+    /** Model's current state in the store */
+    public get state(): State {
+        return this.getStateFromDigest(this.store.digest)
+    }
+
+    /** Representation of the model used in connected views, among other places */
+    public get resultNode() {
+        const self = this;
+        return {
+            get state() {
+                return self.state
+            },
+            get actions() {
+                return self.actions
+            }
+        }
+    }
+
+    // =======
+    // Options
+    // =======
+
+    /** State reducer */
+    abstract update(state: State | undefined, updateContext: UpdateContext<Dependencies>): State;
+
+    /** Side-effect and async action handler */
+    abstract process(action$: Observable<ActionLike>, model: this): ZenObservable.ObservableLike<InputAction>;
+
+    /**
+     * Other models this model depends on.
+     *
+     * Every time the dependencies' state changes,
+     * the model's `update` function is triggered within the same Dispatch Cycle.
+     */
+    public get dependencies() {
+        return this._dependencies;
+    }
+    protected _dependencies: Dependencies;
+
+    /** Unbound action creators */
+    public get actionCreators() {
+        return this._actionCreators;
+    }
+    protected _actionCreators: ActionCreators;
+
+    /** List of action types the model accepts */
+    public get accept() {
+        return this._accept;
+    }
+    protected _accept?: string[];
+
+    // =======
     // Methods
+    // =======
+
     constructor() {
         if (this.constructor === AbstractModel) {
             throw new TypeError('Cannot instantiate abstract class AbstractModel')
@@ -184,8 +226,8 @@ export abstract class AbstractModel<
         return dump
     }
 
-    getStateFromDigest(digest: Map<ModelInterface, any>): State {
-        return digest.get(this)
+    getStateFromDigest(digest: Map<string, any>): State {
+        return digest.get(this.keyPath)
     }
 
     private _callNowOrWhenDoneLinked(callback: () => void) {

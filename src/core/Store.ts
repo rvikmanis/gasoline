@@ -32,7 +32,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
     private _dispatchDepth: number;
 
     public isStarted: boolean;
-    public digest: Map<ModelInterface, any>;
+    public digest: Map<string, any>;
     public action$: Observable<ActionLike>;
     public model: M;
 
@@ -54,6 +54,10 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
 
         const onLinked = model.link(this)
         onLinked()
+    }
+
+    get isDispatching() {
+        return this._dispatchDepth > 0
     }
 
     start() {

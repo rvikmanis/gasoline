@@ -1,6 +1,6 @@
 # Gasoline
 
-Gasoline is a state management library with a focus on expressiveness, predictability and performance.
+Pragmatic state management for reactive web applications.
 
 #### Table of contents
 
