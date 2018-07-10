@@ -9,12 +9,10 @@ import Toposort from 'toposort-class'
 
 export class CombinedModel<Children extends Schema> extends AbstractModel<StateOf<Children>> {
   public children: Map<keyof Children, Children[keyof Children]>;
-  private _childKeysByModel: Map<Children[keyof Children], keyof Children>
 
   constructor(children: Children) {
     super()
     this.children = new Map(Object.keys(children).map(k => [k, children[k]] as [string, ModelInterface]))
-    this._childKeysByModel = new Map([...this.children].map(entry => [entry[1], entry[0]] as [typeof entry[1], typeof entry[0]]))
     this._accept = this._combineActionTypeMatchLists(children)
   }
 
@@ -59,7 +57,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
   }
 
   dump<R>(state: this['state']) {
-    const dump: {[K in keyof this['state']]?: R} = <any>{}
+    const dump: { [K in keyof this['state']]?: R } = <any>{}
 
     for (const [key, node] of this.children) {
       const childDump = node.dump(state[key]) as R
@@ -73,7 +71,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     }
   }
 
-  load<R>(dump: {[K in keyof this['state']]?: R} = {}, updateContext: UpdateContext<Schema>): this['state'] {
+  load<R>(dump: { [K in keyof this['state']]?: R } = {}, updateContext: UpdateContext<Schema>): this['state'] {
     const state: this['state'] = <any>{}
 
     for (const [key, node] of this.children) {
@@ -194,8 +192,6 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
   }
 
   private _createExternalDependencies() {
-    const children = this.children
-
     type Row = [keyof Children, Children[keyof Children]]
 
     const dependencyReducer = (a: Schema, [key, node]: Row) => {

@@ -1,14 +1,12 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { Model, combineModels, Observable, Store, connect, UpdateContext, ModelInterface, InputAction, ActionLike } from "gasoline";
+import { Model, combineModels, Observable, Store, connect, UpdateContext, InputAction } from "gasoline";
 import './index.css';
 
 const counter = new Model({
 
   actionCreators: {
-    increment() {
-      return { type: "INCREMENT" }
-    }
+    increment: () => ({ type: "INCREMENT" })
   },
 
   update(state: number = 0, context) {
@@ -25,9 +23,7 @@ const counter = new Model({
 const autoIncrement = new Model({
 
   actionCreators: {
-    toggle() {
-      return { type: "TOGGLE_AUTO_INCREMENT" }
-    }
+    toggle: () => ({ type: "TOGGLE_AUTO_INCREMENT" })
   },
 
   update(state: boolean = true, context) {
@@ -39,32 +35,20 @@ const autoIncrement = new Model({
     }
   },
 
-  process(action$, model) {
-    return action$
+  process: (action$, model) => action$
+    .ofType(Store.START, "TOGGLE_AUTO_INCREMENT")
+    .switchMap(() => model.state
+      ? Observable
+        .interval(1000)
+        .map(counter.actionCreators.increment)
+      : Observable.empty()
+    )
 
-      // When the store starts, and
-      // each time TOGGLE_AUTO_INCREMENT is dispatched,
-      .ofType(Store.START, "TOGGLE_AUTO_INCREMENT")
-      .switchMap(() => {
-
-        if (model.state) {
-          // if auto increment is enabled, emit INCREMENT every second
-          const action = counter.actionCreators.increment()
-          return Observable.interval(1000).map(() => action)
-        }
-
-        // otherwise emit nothing.
-        return Observable.empty()
-
-        // Note: switchMap takes care of subscribing to the latest stream
-        // and unsubscribing from previous streams.
-      })
-  }
 });
 
 type SetValueAction = {
-  type: "SET_VALUE";
-  payload: string;
+  type: "SET_VALUE",
+  payload: string
 }
 
 type TextFieldDependencies = {
@@ -72,31 +56,41 @@ type TextFieldDependencies = {
 }
 
 const textField = new Model({
+
   dependencies: {
     counter: counter
   },
-  update(state: string = "", context: UpdateContext<TextFieldDependencies, SetValueAction & ActionLike>) {
-    if (context.action.type === "SET_VALUE") {
-      state = context.action.payload
+
+  update(state: string = "", context: UpdateContext<TextFieldDependencies, SetValueAction>) {
+    const {
+      action,
+      dependencies
+    } = context
+
+    if (action.type === "SET_VALUE") {
+      state = action.payload
     }
 
-    state = context.dependencies.counter % 100 === 0
+    return dependencies.counter % 4 === 0
       ? state.toUpperCase()
       : state.toLowerCase()
+  },
 
-    return state
-  },
-  process(action$, model) {
-    return action$.ofType("SET_VALUE").mergeMap(() => {
-      const i = counter.actionCreators.increment();
-      return Observable.of(i, i)
-    })
-  },
+  process: action$ => action$
+    .ofType("SET_VALUE")
+    .mergeMap(() => {
+      const inc = counter.actionCreators.increment();
+      return Observable.of(inc, inc)
+    }),
+
   actionCreators: {
-    setValue(e: any): SetValueAction & InputAction {
-      return { type: "SET_VALUE", payload: e.target.value, target: textField }
-    }
+    setValue: (e: any): SetValueAction & InputAction => ({
+      type: "SET_VALUE",
+      payload: e.target.value,
+      target: textField
+    })
   }
+
 })
 
 const rootModel = combineModels({
@@ -104,37 +98,25 @@ const rootModel = combineModels({
   autoIncrement,
   textField
 });
-
 const store = new Store(rootModel);
 
-const CounterApp = connect(rootModel)(() => {
-
-  const incrementBtn = (
-    <button disabled={autoIncrement.state}
-            onClick={counter.actions.increment}>
-      Increment
-    </button>
-  )
-
-  const toggleBtn = (
-    <button onClick={autoIncrement.actions.toggle}>
-      {autoIncrement.state ? "Disable" : "Enable"} auto inc.
-    </button>
-  )
-
-  const textInput = (
-    <input onChange={textField.actions.setValue} value={textField.state} />
-  )
-
-  return (
+const CounterApp = connect(rootModel)(() =>
+  <div>
+    <div>{counter.state} test</div>
     <div>
-      <div>{counter.state} test</div>
-      <div>{incrementBtn} {toggleBtn}</div>
-      <div>{textInput}</div>
+      <button disabled={autoIncrement.state}
+        onClick={counter.actions.increment}>
+        Increment
+        </button>
+      <button onClick={autoIncrement.actions.toggle}>
+        {autoIncrement.state ? "Disable" : "Enable"} auto inc.
+        </button>
     </div>
-  )
-
-})
+    <div>
+      <input onChange={textField.actions.setValue} value={textField.state} />
+    </div>
+  </div>
+)
 
 store.ready(() => {
   ReactDOM.render(

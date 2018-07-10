@@ -5,8 +5,8 @@
   "description": "",
   "scripts": {
     "reset": "rm -rf node_modules && rm -rf .fusebox",
-    "start": "yarn reset && yarn && node fuse",
-    "dist": "yarn reset && yarn && node fuse dist",
+    "start": "npm run reset && npm install && node fuse",
+    "dist": "npm run reset && npm install && node fuse dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -15,7 +15,7 @@
     "react": "15.6",
     "react-dom": "15.6",
     "rxjs": "5",
-    "gasoline": "link:../.."
+    "gasoline": "../.."
   },
   "devDependencies": {
     "fuse-box": "^2.2.3",

@@ -75,7 +75,7 @@ export class Observable<T> extends BaseObservable<T> {
     protected _matchType(actionTypes: string[], matchValue: boolean) {
         const cache = {};
 
-        return this.filter((action: T & ActionLike) => {
+        return this.filter((action: T) => {
             if (typeof action !== "object") {
                 return false
             }
@@ -84,11 +84,15 @@ export class Observable<T> extends BaseObservable<T> {
                 return false
             }
 
-            if (typeof action.type !== "string") {
+            if (typeof (action as any as ActionLike).type !== "string") {
                 return false
             }
 
-            return matchValue === matchActionType(actionTypes, action.type, cache)
+            return matchValue === matchActionType(
+                actionTypes,
+                (action as any as ActionLike).type,
+                cache
+            )
         })
     }
 

@@ -1,16 +1,18 @@
-import { ActionCreatorMap, ModelInterface, ActionLike, Epic, Reducer, Schema, InputAction } from '../interfaces';
+import { ActionCreatorMap, ActionLike, Schema, InputAction, StateOf } from '../interfaces';
 import { AbstractModel } from './AbstractModel';
 import { UpdateContext } from "./UpdateContext";
 import { Observable } from "./Observable";
 
-export class Model<
+export class SelectorModel<
   State = void,
   ActionCreators extends ActionCreatorMap = {},
   Dependencies extends Schema = {}
   > extends AbstractModel<State, ActionCreators, Dependencies> {
 
+  protected _getState: (dependencies: StateOf<Dependencies>) => State;
+
   update(state: State, context: UpdateContext<Dependencies>) {
-    return state
+    return this._getState(context.dependencies)
   }
 
   process(action$: Observable<ActionLike>, model: this) {
@@ -18,9 +20,8 @@ export class Model<
   }
 
   constructor(options: {
-    dependencies?: Dependencies,
-    update?: Reducer<State, Dependencies>,
-    process?: Epic<ModelInterface>,
+    dependencies: Dependencies,
+    getState: (dependencies: StateOf<Dependencies>) => State,
     accept?: string[],
     dump?: (state: State | void) => any,
     load?: (dump: any, updateContext: UpdateContext<Dependencies>) => State | void,
@@ -28,17 +29,8 @@ export class Model<
   }) {
     super()
 
-    if (options.dependencies) {
-      this._dependencies = options.dependencies
-    }
-
-    if (options.update) {
-      this.update = options.update
-    }
-
-    if (options.process) {
-      this.process = options.process as any as this["process"]
-    }
+    this._dependencies = options.dependencies
+    this._getState = options.getState
 
     if (options.accept) {
       this._accept = options.accept
@@ -54,14 +46,6 @@ export class Model<
 
     if (options.actionCreators) {
       this._actionCreators = options.actionCreators
-    }
-
-    if (!options.update) {
-      // Models without state don't need serialization.
-      // Keys with undefined values are not included
-      // in the dump (see CombinedModel#dump)
-      this.dump = () => undefined
-      this.load = () => undefined
     }
   }
 }

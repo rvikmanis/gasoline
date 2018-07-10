@@ -34,7 +34,7 @@ export abstract class AbstractModel<
     State,
     ActionCreators extends ActionCreatorMap = {},
     Dependencies extends Schema = {}
-> implements ModelInterface {
+    > implements ModelInterface {
 
     // ====
     // Core
@@ -75,7 +75,7 @@ export abstract class AbstractModel<
         }
         return this._actions
     }
-    private _actions: {[K in keyof ActionCreators]: (...args: any[]) => void };
+    private _actions?: { [K in keyof ActionCreators]: (...args: any[]) => void };
 
     /** Parent model in the state tree */
     public get parent() {
@@ -126,7 +126,7 @@ export abstract class AbstractModel<
     protected _dependencies: Dependencies;
 
     /** Unbound action creators */
-    public get actionCreators() {
+    public get actionCreators(): ActionCreators {
         return this._actionCreators;
     }
     protected _actionCreators: ActionCreators;
@@ -161,8 +161,8 @@ export abstract class AbstractModel<
     }
 
     isDescendantOf(ancestor: ModelInterface) {
-        let model: ModelInterface = this
-        while(model.parent !== undefined) {
+        let model: ModelInterface = this as any
+        while (model.parent !== undefined) {
             if (model.parent === ancestor) {
                 return true
             }

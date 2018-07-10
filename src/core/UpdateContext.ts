@@ -11,7 +11,7 @@ export type WorkingState = {
 
 export class UpdateContext<Dependencies extends Schema, A extends ActionLike = ActionLike> {
   public readonly action: A;
-  public model: ModelInterface;
+  public model: ModelInterface = undefined as any;
   public workingState: WorkingState;
   private _modelData: Map<ModelInterface, {
     shouldUpdate: boolean,
@@ -20,9 +20,9 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
     _dependencies: any
   }>
 
-  public shouldUpdate: boolean;
-  public actionDoesMatch: boolean;
-  public dependenciesHaveChanged: boolean;
+  public shouldUpdate: boolean = undefined as any;
+  public actionDoesMatch: boolean = undefined as any;
+  public dependenciesHaveChanged: boolean = undefined as any;
 
   private _dependencies: any;
   public get dependencies(): StateOf<Dependencies> {
@@ -74,7 +74,7 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
     this.dependenciesHaveChanged = dependenciesHaveChanged
   }
 
-  public setModel<Model extends ModelInterface>(model: Model) {
+  public setModel<Model extends ModelInterface>(model: Model): UpdateContext<Model['dependencies'], A> {
     this.model = model
     if (this._modelData.has(model)) {
       Object.assign(this, this._modelData.get(model));
@@ -87,7 +87,7 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
         _dependencies: this._dependencies
       })
     }
-    return this as UpdateContext<Model['dependencies'], A>
+    return this
   }
 
   public updateDigest(nextState: any) {
