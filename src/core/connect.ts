@@ -2,31 +2,36 @@ import { ComponentType, ComponentClass, Component, createElement } from "react"
 import shallowEquals from "shallow-equals";
 import { ModelInterface } from "../interfaces";
 
-function connect<M extends ModelInterface>(
-    model: M
+function connect(
+    ...models: ModelInterface[]
 ) {
+
     return <P = {}>(component: ComponentType<P>) => {
         return class extends Component<P> {
             static displayName = component.displayName;
 
-            subscription: ZenObservable.Subscription;
+            subscriptions: ZenObservable.Subscription[] = [];
             sourceState: any;
 
             componentWillMount() {
-                this.sourceState = model.state
+                this.sourceState = models.map(model => model.state)
             }
 
             componentDidMount() {
-                this.subscription = model.state$.subscribe(sourceState => {
-                    if (!shallowEquals(sourceState, this.sourceState)) {
-                        this.sourceState = sourceState
-                        this.forceUpdate()
-                    }
-                })
+                this.subscriptions = models.map((model, index) =>
+                    model.state$.subscribe(sourceState => {
+                        if (!shallowEquals(sourceState, this.sourceState[index])) {
+                            this.sourceState[index] = sourceState
+                            this.forceUpdate()
+                        }
+                    })
+                )
             }
 
             componentWillUnmount() {
-                this.subscription.unsubscribe()
+                this.subscriptions.forEach(subscription => {
+                    subscription.unsubscribe()
+                })
             }
 
             shouldComponentUpdate(nextProps: P) {

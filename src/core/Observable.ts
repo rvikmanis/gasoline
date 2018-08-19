@@ -22,6 +22,10 @@ function getSpecies(obj: object) {
 }
 
 export class Observable<T> extends BaseObservable<T> {
+    constructor(subscriber: ZenObservable.Subscriber<T>) {
+        super(subscriber)
+    }
+
     static from<R>(observable: Observable<R> | ZenObservable.ObservableLike<R> | ArrayLike<R>): Observable<R> {
         return super.from(observable) as Observable<R>
     }

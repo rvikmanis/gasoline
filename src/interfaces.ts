@@ -31,12 +31,11 @@ export interface ModelInterface {
   readonly isLinked: boolean;
 
   readonly actionCreators: ActionCreatorMap;
-  readonly actions: {[K in keyof any]: (...args: any[]) => void };
+  readonly actions: { [K in keyof any]: (...args: any[]) => void };
 
   readonly parent?: ModelInterface;
 
   readonly state$: Observable<any>;
-  readonly resultNode: any;
 
   isDescendantOf(ancestor: ModelInterface): boolean;
   ready(callback: () => void): void;
@@ -57,4 +56,4 @@ export interface Epic<Model extends ModelInterface> {
 }
 
 export type Schema = { [key: string]: ModelInterface }
-export type StateOf<S extends Schema> = {[K in keyof S]: S[K]['state']}
+export type StateOf<S extends Schema> = { [K in keyof S]: S[K]['state'] }

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { Model, combineModels, Observable, Store, connect, UpdateContext, InputAction } from "gasoline";
+import { Model, combineModels, Observable, Store, connect } from "gasoline";
 import './index.css';
 
 const counter = new Model({
@@ -46,74 +46,24 @@ const autoIncrement = new Model({
 
 });
 
-type SetValueAction = {
-  type: "SET_VALUE",
-  payload: string
-}
-
-type TextFieldDependencies = {
-  counter: typeof counter
-}
-
-const textField = new Model({
-
-  dependencies: {
-    counter: counter
-  },
-
-  update(state: string = "", context: UpdateContext<TextFieldDependencies, SetValueAction>) {
-    const {
-      action,
-      dependencies
-    } = context
-
-    if (action.type === "SET_VALUE") {
-      state = action.payload
-    }
-
-    return dependencies.counter % 4 === 0
-      ? state.toUpperCase()
-      : state.toLowerCase()
-  },
-
-  process: action$ => action$
-    .ofType("SET_VALUE")
-    .mergeMap(() => {
-      const inc = counter.actionCreators.increment();
-      return Observable.of(inc, inc)
-    }),
-
-  actionCreators: {
-    setValue: (e: any): SetValueAction & InputAction => ({
-      type: "SET_VALUE",
-      payload: e.target.value,
-      target: textField
-    })
-  }
-
-})
-
-const rootModel = combineModels({
+const store = new Store(combineModels({
   counter,
-  autoIncrement,
-  textField
-});
-const store = new Store(rootModel);
+  autoIncrement
+}));
 
-const CounterApp = connect(rootModel)(() =>
+const CounterApp = connect(counter, autoIncrement)(() =>
   <div>
-    <div>{counter.state} test</div>
+    <div>Counter: <strong>{counter.state}</strong></div>
     <div>
-      <button disabled={autoIncrement.state}
-        onClick={counter.actions.increment}>
+      <button
+        disabled={autoIncrement.state}
+        onClick={counter.actions.increment}
+      >
         Increment
-        </button>
+      </button>
       <button onClick={autoIncrement.actions.toggle}>
         {autoIncrement.state ? "Disable" : "Enable"} auto inc.
-        </button>
-    </div>
-    <div>
-      <input onChange={textField.actions.setValue} value={textField.state} />
+      </button>
     </div>
   </div>
 )

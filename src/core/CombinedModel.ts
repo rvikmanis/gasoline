@@ -16,19 +16,6 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     this._accept = this._combineActionTypeMatchLists(children)
   }
 
-  public get resultNode() {
-    const children: { [N in keyof Children]: Children[N]["resultNode"] } = {} as any;
-
-    for (const [key, model] of this.children) {
-      children[key] = model.resultNode
-    }
-
-    return {
-      ...super.resultNode,
-      children
-    }
-  }
-
   link(store: Store<any>, parent?: ModelInterface, key?: string) {
     const onLink = super.link(store, parent, key)
     const childrenOnLink = this._linkChildren()
@@ -146,7 +133,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     let callbacks: Array<() => void> = []
 
     for (const [key, node] of this.children) {
-      callbacks.push(node.link(this.store, this, key))
+      callbacks.push(node.link(this.store, this, key as string))
     }
 
     return callbacks

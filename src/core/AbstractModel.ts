@@ -91,19 +91,6 @@ export abstract class AbstractModel<
         return this.getStateFromDigest(this.store.digest)
     }
 
-    /** Representation of the model used in connected views, among other places */
-    public get resultNode() {
-        const self = this;
-        return {
-            get state() {
-                return self.state
-            },
-            get actions() {
-                return self.actions
-            }
-        }
-    }
-
     // =======
     // Options
     // =======
