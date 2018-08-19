@@ -26,6 +26,16 @@ export class Observable<T> extends BaseObservable<T> {
         super(subscriber)
     }
 
+    subscribe(observer: ZenObservable.Observer<T>): ZenObservable.Subscription;
+    subscribe(
+        onNext: (value: T) => void,
+        onError?: (error: any) => void,
+        onComplete?: () => void
+    ): ZenObservable.Subscription;
+    subscribe(onNext: any, onError?: any, onComplete?: any): any {
+        return super.subscribe(onNext, onError, onComplete)
+    }
+
     static from<R>(observable: Observable<R> | ZenObservable.ObservableLike<R> | ArrayLike<R>): Observable<R> {
         return super.from(observable) as Observable<R>
     }
@@ -56,6 +66,53 @@ export class Observable<T> extends BaseObservable<T> {
 
     static merge<R>(...observables: ZenObservable.ObservableLike<R>[]) {
         return this.of(...observables).mergeAll()
+    }
+
+    static combineLatest<R>(...observables: ZenObservable.ObservableLike<R>[]) {
+        return new this<R[]>(observer => {
+            const subscriptions: ZenObservable.Subscription[] = [];
+            const values: R[] = [];
+            const tally = observables.map(() => false)
+
+            observables.forEach((observableLike, index) => {
+                const innerObserver = {
+                    _sub: undefined,
+
+                    start(subscription) {
+                        subscriptions.push((this as any)._sub = subscription)
+                    },
+
+                    next(value) {
+                        values[index] = value
+                        tally[index] = true
+                        if (tally.indexOf(false) === -1) {
+                            observer.next(values.concat())
+                        }
+                    },
+                    error(e) {
+                        observer.error(e)
+                    },
+
+                    complete() {
+                        let i = subscriptions.indexOf((this as any)._sub);
+
+                        if (i >= 0) {
+                            subscriptions.splice(i, 1);
+                        }
+
+                        if (subscriptions.length === 0) {
+                            observer.complete();
+                        }
+                    }
+                } as ZenObservable.Observer<R>
+
+                Observable.from(observableLike).subscribe(innerObserver)
+            })
+
+            return () => {
+                subscriptions.forEach(s => s.unsubscribe());
+            }
+        })
     }
 
     [Symbol.observable](): Observable<T> {
