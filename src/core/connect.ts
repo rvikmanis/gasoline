@@ -5,7 +5,6 @@ import { ModelInterface } from "../interfaces";
 function connect(
     ...models: ModelInterface[]
 ) {
-
     return <P = {}>(component: ComponentType<P>) => {
         return class extends Component<P> {
             static displayName = component.displayName;

@@ -21,7 +21,7 @@ export type ActionCreatorMap = { [key: string]: ActionCreator }
 export interface ModelInterface {
   readonly accept?: string[];
   readonly update: Reducer<any, Schema>;
-  readonly process: Epic<ModelInterface>;
+  readonly process: Epic;
 
   readonly dependencies: Schema;
   readonly state: any;
@@ -51,8 +51,8 @@ export interface Reducer<S, D extends Schema> {
   (state: S | undefined, context: UpdateContext<D>): S
 }
 
-export interface Epic<Model extends ModelInterface> {
-  (action$: Observable<ActionLike>, model: Model): ZenObservable.ObservableLike<InputAction>
+export interface Epic {
+  (action$: Observable<ActionLike>, model: any): ZenObservable.ObservableLike<InputAction>
 }
 
 export type Schema = { [key: string]: ModelInterface }

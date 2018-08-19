@@ -20,7 +20,7 @@ export class Model<
   constructor(options: {
     dependencies?: Dependencies,
     update?: Reducer<State, Dependencies>,
-    process?: Epic<ModelInterface>,
+    process?: Epic,
     accept?: string[],
     dump?: (state: State | void) => any,
     load?: (dump: any, updateContext: UpdateContext<Dependencies>) => State | void,

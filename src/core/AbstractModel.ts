@@ -50,13 +50,13 @@ export abstract class AbstractModel<
     public get keyPath() {
         return this._keyPath;
     }
-    private _keyPath: string;
+    private _keyPath: string = undefined as any;
 
     /** The linked store */
     public get store() {
         return this._store;
     }
-    private _store: Store;
+    private _store: Store = undefined as any;
 
     /** A flag indicating if the model is linked to a store */
     public get isLinked() {
@@ -96,7 +96,7 @@ export abstract class AbstractModel<
     // =======
 
     /** State reducer */
-    abstract update(state: State | undefined, updateContext: UpdateContext<Dependencies>): State;
+    abstract update(state: State | undefined, updateContext: UpdateContext<Schema>): State;
 
     /** Side-effect and async action handler */
     abstract process(action$: Observable<ActionLike>, model: this): ZenObservable.ObservableLike<InputAction>;
