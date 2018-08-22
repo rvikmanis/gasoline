@@ -1,5 +1,5 @@
 {
-  "name": "counter",
+  "name": "todos",
   "private": true,
   "version": "1.0.0",
   "description": "",
@@ -12,10 +12,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "classnames": "^2.2.6",
+    "gasoline": "../..",
     "react": "15.6",
-    "react-dom": "15.6",
-    "rxjs": "5",
-    "gasoline": "../.."
+    "react-dom": "15.6"
   },
   "devDependencies": {
     "fuse-box": "^2.2.3",

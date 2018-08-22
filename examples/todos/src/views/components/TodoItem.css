@@ -1,0 +1,79 @@
+.TodoItem {
+  padding: 3px 0 3px 0;
+  border-bottom: 1px solid #e0e0e0;
+  -webkit-transition: background-color .15s ease-in-out;
+  -moz-transition: background-color .15s ease-in-out;
+  -ms-transition: background-color .15s ease-in-out;
+  -o-transition: background-color .15s ease-in-out;
+  transition: background-color .15s ease-in-out;
+}
+
+.TodoItem:hover {
+  background: #f8f8f8;
+}
+
+.TodoItem--editing {
+  background: #fefed8;
+}
+
+.TodoItem--editing:hover {
+  background: #fefed8;
+}
+
+.TodoItem__checkbox {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin: 0;
+  margin-left: 10px;
+}
+
+.TodoItem__text {
+  display: inline-block;
+  width: 330px;
+  padding: 8px 0 8px 10px;
+  font-size: 22px;
+  vertical-align: middle;
+  -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   -ms-user-select: none;
+   user-select: none;
+}
+
+.TodoItem__input {
+  padding: 8px 0 8px 40px;
+  width: 360px;
+  font-size: 22px;
+  vertical-align: middle;
+  border: 0;
+  margin: 0;
+  outline: 0;
+  background: transparent;
+}
+
+.TodoItem__delete {
+  opacity: 0;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  margin-right: 10px;
+  vertical-align: middle;
+  font-size: 36px;
+  background: transparent;
+  border: 0;
+  line-height: 0; 
+  outline: 0;
+  -webkit-transition: opacity .15s ease-in-out;
+  -moz-transition: opacity .15s ease-in-out;
+  -ms-transition: opacity .15s ease-in-out;
+  -o-transition: opacity .15s ease-in-out;
+  transition: opacity .15s ease-in-out;
+}
+
+.TodoItem:hover > .TodoItem__delete {
+  display: inline-block;
+  opacity: 1;
+}
