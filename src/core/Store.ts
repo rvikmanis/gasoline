@@ -173,24 +173,7 @@ export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
             }
         }
 
-        let target: string | string[] | undefined;
-
-        if (input.target) {
-            if (typeof input.target === "string") {
-                target = input.target;
-            } else if (Array.isArray(input.target)) {
-                target = Array.prototype.map.call(
-                    input.target,
-                    (t: string | ModelInterface) => (typeof t === "string")
-                        ? t
-                        : t.keyPath
-                )
-            } else {
-                target = input.target.keyPath;
-            }
-        }
-
-        const action = { ...input, target, meta }
+        const action = { ...input, meta }
         const ctx = this._createUpdateContext(action)
         const state = this.model.update(this.model.state, ctx)
         this._saveDigest(state, ctx)

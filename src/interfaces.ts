@@ -4,13 +4,11 @@ import { Observable } from "./core/Observable";
 
 export interface InputAction<T extends string = string> {
   type: T;
-  target?: string | string[] | ModelInterface | ModelInterface[];
   meta?: { [key: string]: any };
   payload?: any;
 }
 
 export interface ActionLike<T extends string = string> extends InputAction<T> {
-  target?: string | string[];
 }
 
 export interface ActionCreator<T extends string = string> {

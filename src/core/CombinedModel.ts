@@ -1,6 +1,5 @@
-import { matchActionTarget } from '../helpers/matchActionTarget';
 import { ActionLike, ModelInterface, StateOf, Schema } from "../interfaces";
-import { relative, join } from 'path'
+import { relative } from 'path'
 import { UpdateContext } from "./UpdateContext";
 import { AbstractModel } from "./AbstractModel";
 import { Observable } from './Observable';
@@ -78,9 +77,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     return (
       new Observable<ZenObservable.ObservableLike<ActionLike>>((observer) => {
         for (const model of this.children.values()) {
-          let a$ = action$.filter(action => {
-            return matchActionTarget(model.keyPath, action.target)
-          })
+          let a$ = action$
 
           if (model.accept) {
             a$ = a$.ofType(Store.START, Store.STOP, ...model.accept)

@@ -1,8 +1,6 @@
-import { relative } from 'path';
 import { ModelInterface, ActionLike, StateOf, Schema } from "../interfaces";
 import { Store } from "./Store";
 import { mapValues } from "../helpers/mapValues";
-import { matchActionTarget } from "../helpers/matchActionTarget";
 
 export type WorkingState = {
   digest: Map<string, any>;
@@ -52,10 +50,8 @@ export class UpdateContext<Dependencies extends Schema, A extends ActionLike = A
   private _compute() {
     this._dependencies = undefined
 
-    const actionTargetMatches = matchActionTarget(this.model.keyPath, this.action.target)
-
     // Match store lifecycle and model actions
-    const actionDoesMatch: boolean = actionTargetMatches && (
+    const actionDoesMatch: boolean = (
       [Store.START, Store.STOP, Store.LOAD].indexOf(this.action.type) > -1
       || this.model.matchActionType(this.action.type)
     )
