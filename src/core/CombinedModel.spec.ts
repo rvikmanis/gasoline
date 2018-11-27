@@ -5,7 +5,7 @@ import { Observable } from "./Observable";
 
 class FakeModel extends AbstractModel<any> {
   process() { return Observable.empty() }
-  update() {}
+  update() { }
   constructor(props: any = {}) {
     super()
     Object.assign(this, props)
@@ -68,12 +68,14 @@ describe('#constructor(children: object)', () => {
     a._accept = ['A']
     b._accept = ['B']
     c = new CombinedModel({ a, b })
+    c.link({} as any)()
     expect(c.accept).toEqual(['B', 'A'])
   })
 
   test('sets #accept to undefined if at least one child has undefined match-list', () => {
     a._accept = ['A']
     c = new CombinedModel({ a, b })
+    c.link({} as any)()
     expect(c.accept).toBe(undefined)
   })
 })

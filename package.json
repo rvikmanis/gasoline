@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "description": "State management library for lazy programmers",
   "scripts": {
-    "test": "tsc --noemit && jest --verbose",
+    "test": "tsc --noemit && jest",
     "b:_clean": "rm -rf ./build ./dist",
     "b:_build": "tsc && rollup -c",
     "b:_minify": "babili --source-maps=true -o build/step-2/gasoline.min.js build/step-2/gasoline.js",

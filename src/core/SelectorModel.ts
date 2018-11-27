@@ -25,7 +25,6 @@ export class SelectorModel<
     accept?: string[],
     dump?: (state: State | void) => any,
     load?: (dump: any, updateContext: UpdateContext<Dependencies>) => State | void,
-    actionCreators?: ActionCreators,
   }) {
     super()
 
@@ -42,10 +41,6 @@ export class SelectorModel<
 
     if (options.load) {
       this.load = options.load
-    }
-
-    if (options.actionCreators) {
-      this._actionCreators = options.actionCreators
     }
   }
 }

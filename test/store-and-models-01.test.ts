@@ -1,12 +1,7 @@
 import { Model, Store, CombinedModel, Observable } from '../src'
 import { Observable as RxObservable } from "rxjs";
 
-const SET_TEXT = 'SET_TEXT'
 const INC = 'INC'
-
-function setText(payload) {
-  return { type: SET_TEXT, payload }
-}
 
 function inc() {
   return { type: INC }
@@ -24,11 +19,11 @@ let store
 
 function setup() {
   const txt = new Model({
-    update(state: string = 'Foo+', context) {
-      if (context.action.type === SET_TEXT) {
-        state = context.action.payload
+    state: 'Foo+',
+    actions: {
+      setText(state, text) {
+        return text
       }
-      return state
     }
   })
 
@@ -240,7 +235,13 @@ test('Dispatching', () => {
     '/'
   ]))
 
-  store.dispatch(setText('Bar'))
+  const setTextBar = text.actionCreators.setText('Bar')
+  expect(setTextBar).toEqual({
+    type: "/text/text:setText",
+    payload: "Bar"
+  })
+
+  store.dispatch(setTextBar)
   expectState({
     text: {
       text: 'Bar',

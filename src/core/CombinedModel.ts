@@ -12,7 +12,6 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
   constructor(children: Children) {
     super()
     this.children = new Map(Object.keys(children).map(k => [k, children[k]] as [string, ModelInterface]))
-    this._accept = this._combineActionTypeMatchLists(children)
   }
 
   link(store: Store<any>, parent?: ModelInterface, key?: string) {
@@ -24,6 +23,7 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
 
       this._sortChildren()
       this._createExternalDependencies()
+      this._accept = this._combineActionTypeMatchLists()
 
       onLink()
     }
@@ -36,10 +36,6 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
 
   getChildByKey<K extends keyof Children>(key: K) {
     return this.children.get(key) as Children[K]
-  }
-
-  isAncestorOf(descendant: ModelInterface) {
-    return descendant.isDescendantOf(this)
   }
 
   dump<R>(state: this['state']) {
@@ -192,10 +188,10 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
     this._dependencies = [...this.children].reduce(dependencyReducer, {} as Schema)
   }
 
-  private _combineActionTypeMatchLists(children: Children) {
+  private _combineActionTypeMatchLists() {
     let accept: string[] | undefined = []
-    Object.keys(children).forEach(key => {
-      const child = children[key]
+
+    for (const [_, child] of this.children) {
       if (accept) {
         if (!child.accept) {
           accept = undefined
@@ -203,7 +199,8 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
           accept.splice(0, 0, ...child.accept)
         }
       }
-    })
+    }
+
     return accept as string[] | undefined
   }
 }

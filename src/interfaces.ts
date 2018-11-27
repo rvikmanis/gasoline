@@ -35,7 +35,6 @@ export interface ModelInterface {
 
   readonly state$: Observable<any>;
 
-  isDescendantOf(ancestor: ModelInterface): boolean;
   ready(callback: () => void): void;
   getStateFromDigest(digest: Map<string, any>): any;
   matchActionType(actionType: string): boolean;

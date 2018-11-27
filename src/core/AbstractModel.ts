@@ -66,16 +66,15 @@ export abstract class AbstractModel<
 
     /** Bound action creators */
     public get actions() {
-        if (!this._actions) {
-            this._actions = mapValues(this.actionCreators, actionCreator => {
-                return (...args: any[]) => {
-                    this.store.dispatch(actionCreator(...args))
-                }
-            })
-        }
         return this._actions
     }
-    private _actions?: { [K in keyof ActionCreators]: (...args: any[]) => void };
+    private _actions: { [K in keyof ActionCreators]: (...args: any[]) => void };
+
+    /** Unbound action creators */
+    public get actionCreators(): ActionCreators {
+        return this._actionCreators;
+    }
+    private _actionCreators: ActionCreators;
 
     /** Parent model in the state tree */
     public get parent() {
@@ -112,11 +111,16 @@ export abstract class AbstractModel<
     }
     protected _dependencies: Dependencies;
 
-    /** Unbound action creators */
-    public get actionCreators(): ActionCreators {
-        return this._actionCreators;
+    public getActionTypeKey(realActionType: string) {
+        return this._actionTypesReverseMap[realActionType]
     }
-    protected _actionCreators: ActionCreators;
+
+    public get actionTypes() {
+        return this._actionTypesMap
+    }
+    private _actionTypesMap: { [key: string]: string }
+    private _actionTypesReverseMap: { [key: string]: string }
+    protected _actionTypes: string[];
 
     /** List of action types the model accepts */
     public get accept() {
@@ -136,8 +140,12 @@ export abstract class AbstractModel<
         this._whenLinked = createDeferred()
         this._actionTypeMatchCache = {}
         this._isLinked = false
-
+        this._actionTypesMap = {}
+        this._actionTypesReverseMap = {}
         this._actionCreators = {} as ActionCreators
+        this._actions = {} as ActionCreators
+
+        this._actionTypes = []
         this._dependencies = {} as Dependencies
 
         this.state$ = new Observable((observer) => {
@@ -145,17 +153,6 @@ export abstract class AbstractModel<
                 observer.next(state)
             });
         })
-    }
-
-    isDescendantOf(ancestor: ModelInterface) {
-        let model: ModelInterface = this as any
-        while (model.parent !== undefined) {
-            if (model.parent === ancestor) {
-                return true
-            }
-            model = model.parent
-        }
-        return false
     }
 
     ready(callback: () => void) {
@@ -178,6 +175,21 @@ export abstract class AbstractModel<
 
         this._store = store
         this._isLinked = true
+
+        this._actionTypes.forEach(actionType => {
+            const realActionType = `${this._keyPath}:${actionType}`
+            this._actionTypesMap[actionType] = realActionType
+            this._actionTypesReverseMap[realActionType] = actionType
+
+            const unboundActionCreator = (payload: any) => ({
+                type: realActionType,
+                payload
+            })
+            this._actionCreators[actionType] = unboundActionCreator
+            this._actions[actionType] = (payload: any) => {
+                this.store.dispatch(unboundActionCreator(payload))
+            }
+        })
 
         return () => {
             this._whenLinked.resolve()
