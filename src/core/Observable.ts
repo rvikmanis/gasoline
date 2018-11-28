@@ -64,6 +64,39 @@ export class Observable<T> extends BaseObservable<T> {
         })
     }
 
+    static timer(initialDelay: number, period?: number) {
+        if (typeof initialDelay !== "number") {
+            throw new TypeError(initialDelay + " is not a number")
+        }
+
+        if (period !== undefined && typeof period !== "number") {
+            throw new TypeError(period + " is not a number")
+        }
+
+        return new this<number>(observer => {
+            let n = 0
+            let sub: ZenObservable.Subscription;
+            const timer = setTimeout(() => {
+                observer.next(n++)
+                if (period !== undefined) {
+                    sub = this.interval(period).subscribe({
+                        next() { observer.next(n++) },
+                        error(e) { observer.error(e) },
+                        complete() { observer.complete() }
+                    })
+                } else {
+                    observer.complete()
+                }
+            }, initialDelay);
+            return () => {
+                clearTimeout(timer)
+                if (sub) {
+                    sub.unsubscribe()
+                }
+            }
+        })
+    }
+
     static merge<R>(...observables: ZenObservable.ObservableLike<R>[]) {
         return this.of(...observables).mergeAll()
     }
