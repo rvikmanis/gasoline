@@ -166,6 +166,17 @@ export class Observable<T> extends BaseObservable<T> {
         return super.reduce(callback, initialValue) as Observable<any>
     }
 
+    toPromise() {
+        let val: T;
+        return new Promise((resolve, reject) => {
+            this.subscribe({
+                next(v) { val = v; },
+                complete() { resolve(val); },
+                error(e) { reject(e) }
+            })
+        })
+    }
+
     protected _matchType(actionTypes: string[], matchValue: boolean) {
         const cache = {};
 
