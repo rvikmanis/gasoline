@@ -5,16 +5,11 @@ import './index.css';
 
 const counter = new Model({
 
-  actionCreators: {
-    increment: () => ({ type: "INCREMENT" })
-  },
+  state: 0,
 
-  update(state: number = 0, context) {
-    switch (context.action.type) {
-      case "INCREMENT":
-        return state + 1
-      default:
-        return state
+  actions: {
+    increment(state) {
+      return state + 1
     }
   }
 
@@ -22,21 +17,16 @@ const counter = new Model({
 
 const autoIncrement = new Model({
 
-  actionCreators: {
-    toggle: () => ({ type: "TOGGLE_AUTO_INCREMENT" })
-  },
+  state: true,
 
-  update(state: boolean = true, context) {
-    switch (context.action.type) {
-      case "TOGGLE_AUTO_INCREMENT":
-        return !state
-      default:
-        return state
+  actions: {
+    toggle(state) {
+      return !state
     }
   },
 
   process: (action$, model) => action$
-    .ofType(Store.START, "TOGGLE_AUTO_INCREMENT")
+    .ofType(Store.START, model.actionTypes.toggle)
     .switchMap(() => model.state
       ? Observable
         .interval(1000)
