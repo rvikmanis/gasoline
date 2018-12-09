@@ -12,19 +12,19 @@ const counter = new Model({
 
   actions: {
     toggle(state) {
-      state.running = !state.running
+      return { ...state, running: !state.running }
     },
     increment(state) {
-      state.counter++
+      return { ...state, counter: state.counter + 1 }
     },
     decrement(state) {
-      state.counter--
+      return { ...state, counter: state.counter - 1 }
     },
     reset(state) {
-      state.counter = 0
+      return { ...state, counter: 0 }
     },
     changeInterval(state, interval) {
-      state.interval = interval
+      return { ...state, interval }
     }
   },
 

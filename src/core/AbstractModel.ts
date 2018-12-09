@@ -1,9 +1,7 @@
 import { join } from 'path';
 import { Observable } from "./Observable";
-import { mapValues } from '../helpers/mapValues';
 import { matchActionType } from '../helpers/matchActionType';
 import {
-    ActionCreatorMap,
     ActionLike,
     ModelInterface,
     Schema,

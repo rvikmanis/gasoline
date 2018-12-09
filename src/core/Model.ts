@@ -1,8 +1,7 @@
-import { ActionCreatorMap, ModelInterface, ActionLike, Epic, Reducer, Schema, InputAction } from '../interfaces';
+import { ActionLike, Epic, Reducer, Schema, InputAction } from '../interfaces';
 import { AbstractModel } from './AbstractModel';
 import { UpdateContext } from "./UpdateContext";
 import { Observable } from "./Observable";
-import { produce, Draft } from "immer";
 
 export class Model<
   State,
@@ -26,7 +25,7 @@ export class Model<
     dump?: (state: State | void) => any,
     load?: (dump: any, updateContext: UpdateContext<Dependencies>) => State | void,
   } & ({
-    actions?: { [K in ActionTypeKeys]: (state: Draft<State>, payload?: any) => void | State },
+    actions?: { [K in ActionTypeKeys]: (state: State, payload?: any) => State },
     actionTypes?: undefined
   } | {
     actionTypes?: ActionTypeKeys[],
@@ -43,7 +42,7 @@ export class Model<
     if (options.actions) {
       this._actionTypes = Object.keys(options.actions) as ActionTypeKeys[]
       for (const actionTypeKey in options.actions) {
-        actionHandlers[actionTypeKey] = produce(options.actions[actionTypeKey])
+        actionHandlers[actionTypeKey] = options.actions[actionTypeKey]
       }
     } else if (options.actionTypes) {
       this._actionTypes = options.actionTypes
