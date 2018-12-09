@@ -17,6 +17,8 @@ export class Model<
     return Observable.empty<InputAction>() as ZenObservable.ObservableLike<InputAction>
   }
 
+  protected _actionHandlers?: { [K in ActionTypeKeys]: Function }
+
   constructor(options: {
     state?: State,
     dependencies?: Dependencies,
@@ -24,37 +26,49 @@ export class Model<
     process?: Epic,
     dump?: (state: State | void) => any,
     load?: (dump: any, updateContext: UpdateContext<Dependencies>) => State | void,
-  } & ({
-    actions?: { [K in ActionTypeKeys]: (state: State, payload?: any) => State },
+    actions?: { [K in ActionTypeKeys]: Function },
     actionTypes?: undefined
-  } | {
+  });
+  constructor(options: {
+    state?: State,
+    dependencies?: Dependencies,
+    update?: Reducer<State, Dependencies>,
+    process?: Epic,
+    dump?: (state: State | void) => any,
+    load?: (dump: any, updateContext: UpdateContext<Dependencies>) => State | void,
     actionTypes?: ActionTypeKeys[],
     actions?: undefined
-  })) {
+  });
+  constructor(options: {
+    state?: State,
+    dependencies?: Dependencies,
+    update?: Reducer<State, Dependencies>,
+    process?: Epic,
+    dump?: (state: State | void) => any,
+    load?: (dump: any, updateContext: UpdateContext<Dependencies>) => State | void,
+    actions?: { [K in ActionTypeKeys]: Function },
+    actionTypes?: ActionTypeKeys[]
+  }) {
     super()
 
     if (options.dependencies) {
       this._dependencies = options.dependencies
     }
 
-    const actionHandlers: { [key: string]: (state: State, payload?: any) => State } = {}
-
     if (options.actions) {
       this._actionTypes = Object.keys(options.actions) as ActionTypeKeys[]
-      for (const actionTypeKey in options.actions) {
-        actionHandlers[actionTypeKey] = options.actions[actionTypeKey]
-      }
+      this._actionHandlers = options.actions
     } else if (options.actionTypes) {
       this._actionTypes = options.actionTypes
     }
 
     this.update = (state: State, context: UpdateContext<Dependencies>) => {
       if (state === undefined) {
-        state = options.state as any
+        state = options.state as State
       }
 
-      if (options.actions) {
-        const actionHandler = actionHandlers[this.getActionTypeKey(context.action.type)]
+      if (this._actionHandlers) {
+        const actionHandler = this._actionHandlers[this.getActionTypeKey(context.action.type)]
         if (actionHandler) {
           state = actionHandler(state, context.action.payload)
         }

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { Model, Observable, Store, connect } from "gasoline";
+import { Model, Observable, Store, createController } from "gasoline";
 import './index.css';
 
 const counter = new Model({
@@ -48,48 +48,53 @@ const counter = new Model({
   }
 })
 
-function onChangeInterval(e) {
-  counter.actions.changeInterval(Number(e.target.value))
-}
+const CounterApp = createController(() => {
+  const { actions: a } = counter
 
-const CounterApp = connect(counter)(() => {
-  const { actions: a, state: s } = counter
+  function onChangeInterval(e) {
+    a.changeInterval(Number(e.target.value))
+  }
 
-  return <div>
+  return counter.state$.map(s =>
     <div>
-      Counter: <strong>{s.counter}</strong>
-    </div>
-    <br />
+      <p>Welcome to Gasoline</p>
+      <br />
 
-    <div>
-      <button disabled={s.running} onClick={a.increment}>
-        INC
+      <div>
+        Counter: <strong>{s.counter}</strong>
+      </div>
+      <br />
+
+      <div>
+        <button disabled={s.running} onClick={a.increment}>
+          INC
       </button>
-      <button disabled={s.running} onClick={a.decrement}>
-        DEC
+        <button disabled={s.running} onClick={a.decrement}>
+          DEC
       </button>
-      &nbsp;
+        &nbsp;
       <button onClick={a.reset}>
-        Reset
+          Reset
       </button>
-      &nbsp;
+        &nbsp;
       <button onClick={a.toggle}>
-        {s.running ? "Stop" : "Start"}
-      </button>
-    </div>
-    <br />
+          {s.running ? "Stop" : "Start"}
+        </button>
+      </div>
+      <br />
 
-    <div>
-      <label>Interval:</label> &nbsp;
+      <div>
+        <label>Interval:</label> &nbsp;
       <select value={s.interval} onChange={onChangeInterval}>
-        <option value={10}>10ms</option>
-        <option value={100}>100ms</option>
-        <option value={250}>250ms</option>
-        <option value={1000}>1s</option>
-        <option value={2000}>2s</option>
-      </select>
+          <option value={10}>10ms</option>
+          <option value={100}>100ms</option>
+          <option value={250}>250ms</option>
+          <option value={1000}>1s</option>
+          <option value={2000}>2s</option>
+        </select>
+      </div>
     </div>
-  </div>
+  )
 })
 
 const store = new Store(counter);

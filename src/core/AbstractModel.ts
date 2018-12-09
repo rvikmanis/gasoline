@@ -117,7 +117,7 @@ export abstract class AbstractModel<
         return this._actionTypesMap
     }
     private _actionTypesMap: { [K in ActionTypeKeys]: string }
-    private _actionTypesReverseMap: { [key: string]: string }
+    private _actionTypesReverseMap: { [key: string]: ActionTypeKeys }
     protected _actionTypes: ActionTypeKeys[];
 
     /** List of action types the model accepts */
