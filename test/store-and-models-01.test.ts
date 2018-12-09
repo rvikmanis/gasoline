@@ -1,12 +1,6 @@
 import { Model, Store, CombinedModel, Observable } from '../src'
 import { Observable as RxObservable } from "rxjs";
 
-const INC = 'INC'
-
-function inc() {
-  return { type: INC }
-}
-
 let text
 let characterList
 let combinedTextModel
@@ -65,21 +59,22 @@ function setup() {
   })
 
   const cntr = counter = new Model({
-    update(state: number = 0, { action }) {
-      if (action.type === INC) {
+    actionTypes: ["inc", "delayedInc", "stopDelayedInc"],
+    update(state: number = 0, { action, model }) {
+      if (action.type === model.actionTypes.inc) {
         state = state + 1
       }
       return state
     },
-    process(action$) {
+    process(action$, model) {
       return action$
-        .ofType('DELAYED_INC')
+        .ofType(model.actionTypes.delayedInc)
         .switchMap(action => {
           return Observable
             .interval(100)
             .take(4)
-            .map(() => inc())
-            .takeUntil(action$.ofType('STOP_DELAYED_INC'))
+            .map(() => model.actionCreators.inc())
+            .takeUntil(action$.ofType(model.actionTypes.stopDelayedInc))
         })
     }
   })
@@ -216,7 +211,7 @@ test('Initial state', () => {
 test('Dispatching', () => {
   store.start()
 
-  store.dispatch(inc())
+  store.dispatch(counter.actionCreators.inc())
   expectState({
     text: {
       text: 'Foo+',
@@ -263,7 +258,7 @@ test('Dispatching', () => {
     '/'
   ]))
 
-  store.dispatch(inc())
+  store.dispatch(counter.actionCreators.inc())
   expectState({
     text: {
       text: 'Bar',
@@ -310,7 +305,7 @@ test('Loading', () => {
 test('Side effects', () => {
   store.start()
 
-  store.dispatch({ type: 'DELAYED_INC' })
+  store.dispatch(counter.actionCreators.delayedInc())
   expect(counter.state).toBe(0)
 
   return RxObservable
@@ -324,11 +319,11 @@ test('Side effects', () => {
 test('Side effect cancellation', () => {
   store.start()
 
-  store.dispatch({ type: 'DELAYED_INC' })
+  counter.actions.delayedInc()
   expect(counter.state).toBe(0)
 
   const stop$ = RxObservable
-    .of({ type: 'STOP_DELAYED_INC' })
+    .of(counter.actionCreators.stopDelayedInc())
     .delay(250)
     .do(action => store.dispatch(action))
 

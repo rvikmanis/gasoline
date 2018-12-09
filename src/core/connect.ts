@@ -1,11 +1,11 @@
-import { ComponentType, ComponentClass, Component, createElement } from "react"
+import React, { Component, createElement } from "react"
 import shallowEquals from "shallow-equals";
 import { ModelInterface } from "../interfaces";
 
 function connect(
     ...models: ModelInterface[]
 ) {
-    return <P = {}>(component: ComponentType<P>) => {
+    return <P = {}>(component: React.ComponentType) => {
         return class extends Component<P> {
             static displayName = component.displayName;
 

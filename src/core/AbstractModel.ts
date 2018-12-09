@@ -32,7 +32,7 @@ function createDeferred<T>() {
  */
 export abstract class AbstractModel<
     State,
-    ActionCreators extends ActionCreatorMap = {},
+    ActionTypeKeys extends string,
     Dependencies extends Schema = {}
     > implements ModelInterface {
 
@@ -68,13 +68,13 @@ export abstract class AbstractModel<
     public get actions() {
         return this._actions
     }
-    private _actions: { [K in keyof ActionCreators]: (...args: any[]) => void };
+    private _actions: { [K in ActionTypeKeys]: (...args: any[]) => void };
 
     /** Unbound action creators */
-    public get actionCreators(): ActionCreators {
+    public get actionCreators() {
         return this._actionCreators;
     }
-    private _actionCreators: ActionCreators;
+    private _actionCreators: { [K in ActionTypeKeys]: (...args: any[]) => ActionLike };
 
     /** Parent model in the state tree */
     public get parent() {
@@ -118,15 +118,27 @@ export abstract class AbstractModel<
     public get actionTypes() {
         return this._actionTypesMap
     }
-    private _actionTypesMap: { [key: string]: string }
+    private _actionTypesMap: { [K in ActionTypeKeys]: string }
     private _actionTypesReverseMap: { [key: string]: string }
-    protected _actionTypes: string[];
+    protected _actionTypes: ActionTypeKeys[];
 
     /** List of action types the model accepts */
-    public get accept() {
+    public get accept(): string[] {
+        if (!this._accept) {
+            this._accept = this._calculateAcceptedActionTypes()
+        }
         return this._accept;
     }
-    protected _accept?: string[];
+    private _accept?: string[];
+
+    protected _calculateAcceptedActionTypes() {
+        let accept = Object.keys(this._actionTypesReverseMap)
+        for (const k in this.dependencies) {
+            const dep = this.dependencies[k]
+            accept = accept.concat(dep.accept)
+        }
+        return accept
+    }
 
     // =======
     // Methods
@@ -140,10 +152,10 @@ export abstract class AbstractModel<
         this._whenLinked = createDeferred()
         this._actionTypeMatchCache = {}
         this._isLinked = false
-        this._actionTypesMap = {}
+        this._actionTypesMap = {} as { [K in ActionTypeKeys]: string }
         this._actionTypesReverseMap = {}
-        this._actionCreators = {} as ActionCreators
-        this._actions = {} as ActionCreators
+        this._actionCreators = {} as { [K in ActionTypeKeys]: (...args: any[]) => ActionLike }
+        this._actions = {} as { [K in ActionTypeKeys]: (...args: any[]) => void }
 
         this._actionTypes = []
         this._dependencies = {} as Dependencies

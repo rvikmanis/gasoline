@@ -2,12 +2,13 @@ import { ActionCreatorMap, ModelInterface, ActionLike, Epic, Reducer, Schema, In
 import { AbstractModel } from './AbstractModel';
 import { UpdateContext } from "./UpdateContext";
 import { Observable } from "./Observable";
+import { produce, Draft } from "immer";
 
 export class Model<
-  State = void,
-  ActionCreators extends ActionCreatorMap = {},
+  State,
+  ActionTypeKeys extends string,
   Dependencies extends Schema = {}
-  > extends AbstractModel<State, ActionCreators, Dependencies> {
+  > extends AbstractModel<State, ActionTypeKeys, Dependencies> {
 
   update(state: State, context: UpdateContext<Dependencies>) {
     return state
@@ -20,21 +21,32 @@ export class Model<
   constructor(options: {
     state?: State,
     dependencies?: Dependencies,
-    actions?: { [key: string]: (state: State, payload?: any) => void | State },
     update?: Reducer<State, Dependencies>,
     process?: Epic,
-    accept?: string[],
     dump?: (state: State | void) => any,
     load?: (dump: any, updateContext: UpdateContext<Dependencies>) => State | void,
-  }) {
+  } & ({
+    actions?: { [K in ActionTypeKeys]: (state: Draft<State>, payload?: any) => void | State },
+    actionTypes?: undefined
+  } | {
+    actionTypes?: ActionTypeKeys[],
+    actions?: undefined
+  })) {
     super()
 
     if (options.dependencies) {
       this._dependencies = options.dependencies
     }
 
+    const actionHandlers: { [key: string]: (state: State, payload?: any) => State } = {}
+
     if (options.actions) {
-      this._actionTypes = Object.keys(options.actions)
+      this._actionTypes = Object.keys(options.actions) as ActionTypeKeys[]
+      for (const actionTypeKey in options.actions) {
+        actionHandlers[actionTypeKey] = produce(options.actions[actionTypeKey])
+      }
+    } else if (options.actionTypes) {
+      this._actionTypes = options.actionTypes
     }
 
     this.update = (state: State, context: UpdateContext<Dependencies>) => {
@@ -43,13 +55,9 @@ export class Model<
       }
 
       if (options.actions) {
-        const actionTypeKey = this.getActionTypeKey(context.action.type)
-        const actionHandler = options.actions[actionTypeKey]
+        const actionHandler = actionHandlers[this.getActionTypeKey(context.action.type)]
         if (actionHandler) {
-          const newState = actionHandler(state, context.action.payload)
-          if (newState !== undefined) {
-            state = newState
-          }
+          state = actionHandler(state, context.action.payload)
         }
       }
 
@@ -62,10 +70,6 @@ export class Model<
 
     if (options.process) {
       this.process = options.process as any as this["process"]
-    }
-
-    if (options.accept) {
-      this._accept = options.accept
     }
 
     if (options.dump) {

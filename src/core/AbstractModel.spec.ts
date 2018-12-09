@@ -2,8 +2,8 @@ import { AbstractModel } from './AbstractModel'
 import { ModelInterface } from "../interfaces";
 import { Observable } from "./Observable";
 
-class ConcreteModel extends AbstractModel<any> {
-  update() {}
+class ConcreteModel extends AbstractModel<any, any> {
+  update() { }
   process() { return Observable.empty() }
 }
 

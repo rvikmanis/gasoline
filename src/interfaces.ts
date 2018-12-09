@@ -17,7 +17,7 @@ export interface ActionCreator<T extends string = string> {
 export type ActionCreatorMap = { [key: string]: ActionCreator }
 
 export interface ModelInterface {
-  readonly accept?: string[];
+  readonly accept: string[];
   readonly update: Reducer<any, Schema>;
   readonly process: Epic;
 
@@ -28,8 +28,9 @@ export interface ModelInterface {
   readonly store: Store<any>;
   readonly isLinked: boolean;
 
-  readonly actionCreators: ActionCreatorMap;
+  readonly actionCreators: { [key: string]: any };
   readonly actions: { [K in keyof any]: (...args: any[]) => void };
+  readonly actionTypes: { [key: string]: string }
 
   readonly parent?: ModelInterface;
 

@@ -1,62 +1,99 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { Model, combineModels, Observable, Store, connect } from "gasoline";
+import { Model, Observable, Store, connect } from "gasoline";
 import './index.css';
 
 const counter = new Model({
-
-  state: 0,
-
-  actions: {
-    increment(state) {
-      return state + 1
-    }
-  }
-
-});
-
-const autoIncrement = new Model({
-
-  state: true,
+  state: {
+    counter: 0,
+    running: true,
+    interval: 1000
+  },
 
   actions: {
     toggle(state) {
-      return !state
+      state.running = !state.running
+    },
+    increment(state) {
+      state.counter++
+    },
+    decrement(state) {
+      state.counter--
+    },
+    reset(state) {
+      state.counter = 0
+    },
+    changeInterval(state, interval) {
+      state.interval = interval
     }
   },
 
-  process: (action$, model) => action$
-    .ofType(Store.START, model.actionTypes.toggle)
-    .switchMap(() => model.state
-      ? Observable
-        .interval(1000)
-        .map(counter.actionCreators.increment)
-      : Observable.empty()
-    )
+  process(action$, counter) {
+    return action$.ofType(
+      Store.START,
+      counter.actionTypes.toggle,
+      counter.actionTypes.changeInterval,
+      counter.actionTypes.reset
+    ).switchMap(() => {
+      const state = counter.state
 
-});
+      if (state.running) {
+        return Observable
+          .interval(state.interval)
+          .map(counter.actionCreators.increment)
+      }
 
-const store = new Store(combineModels({
-  counter,
-  autoIncrement
-}));
+      return Observable.empty()
+    })
+  }
+})
 
-const CounterApp = connect(counter, autoIncrement)(() =>
-  <div>
-    <div>Counter: <strong>{counter.state}</strong></div>
+function onChangeInterval(e) {
+  counter.actions.changeInterval(Number(e.target.value))
+}
+
+const CounterApp = connect(counter)(() => {
+  const { actions: a, state: s } = counter
+
+  return <div>
     <div>
-      <button
-        disabled={autoIncrement.state}
-        onClick={counter.actions.increment}
-      >
-        Increment
+      Counter: <strong>{s.counter}</strong>
+    </div>
+    <br />
+
+    <div>
+      <button disabled={s.running} onClick={a.increment}>
+        INC
       </button>
-      <button onClick={autoIncrement.actions.toggle}>
-        {autoIncrement.state ? "Disable" : "Enable"} auto inc.
+      <button disabled={s.running} onClick={a.decrement}>
+        DEC
+      </button>
+      &nbsp;
+      <button onClick={a.reset}>
+        Reset
+      </button>
+      &nbsp;
+      <button onClick={a.toggle}>
+        {s.running ? "Stop" : "Start"}
       </button>
     </div>
+    <br />
+
+    <div>
+      <label>Interval:</label> &nbsp;
+      <select value={s.interval} onChange={onChangeInterval}>
+        <option value={10}>10ms</option>
+        <option value={100}>100ms</option>
+        <option value={250}>250ms</option>
+        <option value={1000}>1s</option>
+        <option value={2000}>2s</option>
+      </select>
+    </div>
   </div>
-)
+})
+
+const store = new Store(counter);
+store.start()
 
 store.ready(() => {
   ReactDOM.render(
@@ -64,5 +101,3 @@ store.ready(() => {
     document.querySelector("#app")
   )
 })
-
-store.start()

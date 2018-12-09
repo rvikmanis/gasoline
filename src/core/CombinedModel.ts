@@ -6,7 +6,7 @@ import { Observable } from './Observable';
 import { Store } from "./Store";
 import Toposort from 'toposort-class'
 
-export class CombinedModel<Children extends Schema> extends AbstractModel<StateOf<Children>> {
+export class CombinedModel<Children extends Schema> extends AbstractModel<StateOf<Children>, any> {
   public children: Map<keyof Children, Children[keyof Children]>;
 
   constructor(children: Children) {
@@ -23,10 +23,14 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
 
       this._sortChildren()
       this._createExternalDependencies()
-      this._accept = this._combineActionTypeMatchLists()
+      this.accept
 
       onLink()
     }
+  }
+
+  protected _calculateAcceptedActionTypes() {
+    return this._combineActionTypeMatchLists()
   }
 
   unlink() {
@@ -189,19 +193,13 @@ export class CombinedModel<Children extends Schema> extends AbstractModel<StateO
   }
 
   private _combineActionTypeMatchLists() {
-    let accept: string[] | undefined = []
+    let accept: string[] = []
 
     for (const [_, child] of this.children) {
-      if (accept) {
-        if (!child.accept) {
-          accept = undefined
-        } else {
-          accept.splice(0, 0, ...child.accept)
-        }
-      }
+      accept.splice(0, 0, ...child.accept)
     }
 
-    return accept as string[] | undefined
+    return accept
   }
 }
 

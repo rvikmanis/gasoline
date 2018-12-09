@@ -18,7 +18,7 @@ class MultiSubscription {
     }
 }
 
-export class Store<M extends AbstractModel<any> = AbstractModel<any>> {
+export class Store<M extends AbstractModel<any, any> = AbstractModel<any, any>> {
     static START = 'gasoline.Store.START'
     static STOP = 'gasoline.Store.STOP'
     static LOAD = 'gasoline.Store.LOAD'
