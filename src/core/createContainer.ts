@@ -1,12 +1,10 @@
-import React, { Component, createElement } from "react"
-import shallowEquals from "shallow-equals";
-import { ModelInterface } from "../interfaces";
-import { Observable, ValueSource, StreamSource } from "./Observable";
+import React, { Component } from "react"
+import { Observable, StreamSource } from "./Observable";
 
 export type Out = Observable<JSX.Element | null | false>
 export type State = { vdom: JSX.Element | null | false }
 
-export function createController<P>(propsToVdom: (props$: Observable<P>) => Out) {
+export function createContainer<P>(propsToVdom: (props$: Observable<P>) => Out) {
   return class extends Component<P, State> {
     state: State = { vdom: null }
 

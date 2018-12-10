@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { Model, Observable, Store, createController } from "gasoline";
+import { Model, Observable, Store, createContainer } from "gasoline";
 import './index.css';
 
 const counter = new Model({
@@ -103,7 +103,7 @@ function Counter(props: CounterProps) {
   )
 }
 
-const CounterController = createController(() => {
+const CounterContainer = createContainer(() => {
   const { actions, state$ } = counter
 
   function onIntervalChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -126,7 +126,7 @@ const CounterController = createController(() => {
 
 store.ready(() => {
   ReactDOM.render(
-    <CounterController />,
+    <CounterContainer />,
     document.querySelector("#app")
   )
 })
