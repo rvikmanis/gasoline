@@ -24,12 +24,12 @@ const counter = new Model({
       return { ...state, counter: 0 }
     },
     changeInterval(state, interval) {
-      return { ...state, interval }
+      return { ...state, interval, counter: 0 }
     }
   },
 
   process(action$, counter) {
-    return action$.ofType(
+    const autoIncrement$ = action$.ofType(
       Store.START,
       counter.actionTypes.toggle,
       counter.actionTypes.changeInterval,
@@ -45,47 +45,53 @@ const counter = new Model({
 
       return Observable.empty()
     })
+
+    return autoIncrement$
   }
 })
 
-const CounterApp = createController(() => {
-  const { actions: a } = counter
+const store = new Store(counter);
 
-  function onChangeInterval(e) {
-    a.changeInterval(Number(e.target.value))
-  }
+type CounterProps = {
+  running: boolean,
+  counter: number,
+  interval: number,
+  onIntervalChange: React.ChangeEventHandler<HTMLSelectElement>,
+  onResetClick: React.MouseEventHandler<HTMLButtonElement>,
+  onToggleClick: React.MouseEventHandler<HTMLButtonElement>,
+  onIncrementClick: React.MouseEventHandler<HTMLButtonElement>,
+  onDecrementClick: React.MouseEventHandler<HTMLButtonElement>
+}
 
-  return counter.state$.map(s =>
+function Counter(props: CounterProps) {
+  return (
     <div>
-      <p>Welcome to Gasoline</p>
-      <br />
-
       <div>
-        Counter: <strong>{s.counter}</strong>
+        Counter: <strong>{props.counter}</strong>
       </div>
       <br />
 
       <div>
-        <button disabled={s.running} onClick={a.increment}>
+        <button disabled={props.running} onClick={props.onIncrementClick}>
           INC
       </button>
-        <button disabled={s.running} onClick={a.decrement}>
+        <button disabled={props.running} onClick={props.onDecrementClick}>
           DEC
       </button>
         &nbsp;
-      <button onClick={a.reset}>
+      <button onClick={props.onResetClick}>
           Reset
       </button>
         &nbsp;
-      <button onClick={a.toggle}>
-          {s.running ? "Stop" : "Start"}
+      <button onClick={props.onToggleClick}>
+          {props.running ? "Stop" : "Start"}
         </button>
       </div>
       <br />
 
       <div>
         <label>Interval:</label> &nbsp;
-      <select value={s.interval} onChange={onChangeInterval}>
+      <select value={props.interval} onChange={props.onIntervalChange}>
           <option value={10}>10ms</option>
           <option value={100}>100ms</option>
           <option value={250}>250ms</option>
@@ -95,14 +101,34 @@ const CounterApp = createController(() => {
       </div>
     </div>
   )
-})
+}
 
-const store = new Store(counter);
-store.start()
+const CounterController = createController(() => {
+  const { actions, state$ } = counter
+
+  function onIntervalChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    actions.changeInterval(Number(e.target.value))
+  }
+
+  return state$.map(state =>
+    <Counter
+      running={state.running}
+      interval={state.interval}
+      counter={state.counter}
+      onDecrementClick={actions.decrement}
+      onIncrementClick={actions.increment}
+      onToggleClick={actions.toggle}
+      onResetClick={actions.reset}
+      onIntervalChange={onIntervalChange}
+    />
+  )
+})
 
 store.ready(() => {
   ReactDOM.render(
-    <CounterApp />,
+    <CounterController />,
     document.querySelector("#app")
   )
 })
+
+store.start()
