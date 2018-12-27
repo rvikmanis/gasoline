@@ -1,6 +1,6 @@
 {
   "name": "gasoline",
-  "version": "0.2.0",
+  "version": "0.2.4",
   "description": "Convenient state container for React",
   "scripts": {
     "test": "tsc --noemit && jest",
@@ -14,7 +14,7 @@
     "prepublishOnly": "npm run dist"
   },
   "files": [
-    "./dist/"
+    "dist/**/*"
   ],
   "main": "dist/gasoline.js",
   "types": "dist/typings/index.d.ts",
