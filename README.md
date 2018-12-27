@@ -1,6 +1,6 @@
 # Gasoline
 
-Pragmatic state container with encapsulation. Made for React.
+Convenient state container for React
 
 ## Installation
 
@@ -18,4 +18,4 @@ When using the CDN version, make sure React is available globally.
 
 ## Getting started
 
-* See [examples/counter/index.tsx]()
+See [examples/counter/index.tsx]()
