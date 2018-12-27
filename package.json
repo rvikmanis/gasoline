@@ -1,6 +1,6 @@
 {
   "name": "gasoline",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Convenient state container for React",
   "scripts": {
     "test": "tsc --noemit && jest",

@@ -18,4 +18,4 @@ When using the CDN version, make sure React is available globally.
 
 ## Getting started
 
-See [examples/counter/index.tsx]()
+See [examples/counter/src/index.tsx](examples/counter/src/index.tsx)
