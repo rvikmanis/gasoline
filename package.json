@@ -1,6 +1,6 @@
 {
   "name": "gasoline",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Convenient state container for React",
   "scripts": {
     "test": "tsc --noemit && jest",
@@ -18,8 +18,6 @@
   ],
   "main": "dist/gasoline.js",
   "types": "dist/typings/index.d.ts",
-  "jsnext:main": "dist/gasoline.mjs",
-  "module": "dist/gasoline.mjs",
   "author": "Rudolfs Vikmanis <rudolfs.vikmanis@gmail.com>",
   "repository": {
     "type": "git",
